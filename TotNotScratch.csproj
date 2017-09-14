@@ -108,8 +108,8 @@
     <Compile Include="Assets\TotNotScratch\Scripts\Scale.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Assets\TotNotScratch\Resources\Audio\Clip\GuitarScale\_readme_and_license.txt" />
-    <None Include="Assets\TotNotScratch\Resources\Audio\Clip\XylophoneScale\_readme_and_license.txt" />
+    <None Include="Assets\Resources\Audio\Clip\GuitarScale\_readme_and_license.txt" />
+    <None Include="Assets\Resources\Audio\Clip\XylophoneScale\_readme_and_license.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="GenerateTargetFrameworkMonikerAttribute" />

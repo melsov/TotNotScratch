@@ -194,10 +194,23 @@ public class GameThing : MonoBehaviour {
     }
 
     protected virtual void OnCollisionEnter2D(Collision2D collision) {
-        collisionEnterWithSomethingTagged(collision.collider.tag);
+        collisionEnterWithSomethingTagged(collision);
     }
 
-    protected virtual void collisionEnterWithSomethingTagged(string tag) { }
+    public struct TaggedCollision
+    {
+        public Collision2D collision;
+        public Collider2D collider { get { return collision.collider; } }
+        
+        public TaggedCollision(Collision2D collision) {
+            this.collision = collision;
+        }
+
+        public static implicit operator string(TaggedCollision tc) { return tc.collision.collider.tag; }
+        public static implicit operator TaggedCollision(Collision2D coll) { return new TaggedCollision(coll); }
+    }
+
+    protected virtual void collisionEnterWithSomethingTagged(TaggedCollision tag) { }
 
     #endregion
 
@@ -337,6 +350,10 @@ public class GameThing : MonoBehaviour {
         rb.MovePosition(global);
     }
 
+    protected virtual void lerpTo(Vector3 global, float lerpFactor = 1.4f) {
+        rb.MovePosition(Vector3.Lerp(transform.position, global, Mathf.Clamp01(lerpFactor * Time.deltaTime)));
+    }
+
     protected virtual void boost(Vector2 force, ForceMode2D mode = ForceMode2D.Force) {
         rb.AddForce(force, mode);
     }
@@ -360,6 +377,12 @@ public class GameThing : MonoBehaviour {
     }
 
     protected virtual void update() { }
+
+    private void FixedUpdate() {
+        fixedUpdate();
+    }
+
+    protected virtual void fixedUpdate() { }
 
     protected void dbug(string s) {
         if(wantDBugMessages) {

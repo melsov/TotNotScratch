@@ -16,12 +16,12 @@ public class GTRotater : GameThing
         physicsWorksOnMe(true);
     }
 
-    protected override void update() {
+    protected override void fixedUpdate() {
         lookAt(mousePosition);
-        moveInDirection(mousePosition - position);
+        lerpTo(mousePosition);
     }
 
-    protected override void collisionEnterWithSomethingTagged(string tag) {
+    protected override void collisionEnterWithSomethingTagged(TaggedCollision tag) {
         if(tag == "MildlyBad") {
             say("i hit a something mildly bad");
         }
