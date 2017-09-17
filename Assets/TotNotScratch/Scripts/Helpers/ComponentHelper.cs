@@ -18,12 +18,13 @@ public static class ComponentHelper
         return thing;
     }
 
-    public static T FindInChildrenOrAddChildFromResourcesPrefab<T>(Transform trans, string resourcesRelPath, Vector3 childRelPos) where T : Component {
+    public static T FindInChildrenOrAddChildFromResourcesPrefab<T>(Transform trans, string resourcesRelPath, Vector3 childRelPos = default(Vector3)) where T : Component {
         T thing = trans.GetComponentInChildren<T>();
         if(!thing) {
             thing = UnityEngine.Object.Instantiate(Resources.Load<T>(resourcesRelPath));
-            thing.transform.position = trans.position + childRelPos;
+            //thing.transform.position = trans.position + childRelPos;
             thing.transform.SetParent(trans);
+            thing.transform.localPosition = childRelPos;
         }
         return thing;
     }

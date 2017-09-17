@@ -120,6 +120,22 @@ public struct VectorXY  {
         }
     }
 
+    public VectorXY saturatedPositive {
+        get {
+            return new VectorXY(x > 0f ? 1f : 0f, y > 0f ? 1f : 0f);
+        }
+    }
+
+    public VectorXY saturatedNegative {
+        get {
+            return new VectorXY(x < 0f ? -1f : 0f, y < 0f ? -1f : 0f);
+        }
+    }
+
+    public VectorXY saturatedNegPos {
+        get { return saturatedPositive + saturatedNegative; }
+    }
+
     public static VectorXY operator +(VectorXY a, VectorXY b) {
         return new VectorXY(a.v + b.v);
     }

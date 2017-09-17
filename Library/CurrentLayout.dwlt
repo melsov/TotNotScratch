@@ -107,10 +107,10 @@ MonoBehaviour:
     y: 30
     width: 1920
     height: 947
-  m_MinSize: {x: 713, y: 471}
-  m_MaxSize: {x: 18008, y: 18021}
+  m_MinSize: {x: 713, y: 513}
+  m_MaxSize: {x: 18008, y: 18063}
   vertical: 0
-  controlID: 16
+  controlID: 96
 --- !u!114 &6
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -207,8 +207,8 @@ MonoBehaviour:
     y: 0
     width: 723
     height: 947
-  m_MinSize: {x: 234, y: 471}
-  m_MaxSize: {x: 10004, y: 18021}
+  m_MinSize: {x: 234, y: 513}
+  m_MaxSize: {x: 10004, y: 18063}
   vertical: 1
   controlID: 97
 --- !u!114 &10
@@ -229,8 +229,8 @@ MonoBehaviour:
     y: 0
     width: 723
     height: 400
-  m_MinSize: {x: 100, y: 100}
-  m_MaxSize: {x: 4000, y: 4000}
+  m_MinSize: {x: 104, y: 121}
+  m_MaxSize: {x: 4004, y: 4021}
   m_ActualView: {fileID: 18}
   m_Panes:
   - {fileID: 17}
@@ -415,14 +415,14 @@ MonoBehaviour:
     width: 781
     height: 375
   m_SceneLighting: 0
-  lastFramingTime: 18255.658632097726
+  lastFramingTime: 84576.32861091872
   m_2DMode: 0
   m_isRotationLocked: 0
   m_AudioPlay: 0
   m_Position:
-    m_Target: {x: 0, y: 0, z: -3.9700003}
+    m_Target: {x: 2.7761273, y: 1.0388116, z: 0.97069645}
     speed: 2
-    m_Value: {x: 0, y: 0, z: -3.9700003}
+    m_Value: {x: 2.7761273, y: 1.0388116, z: 0.97069645}
   m_RenderMode: 0
   m_ValidateTrueMetals: 0
   m_SceneViewState:
@@ -437,21 +437,21 @@ MonoBehaviour:
       speed: 2
       m_Value: 0
     yGrid:
-      m_Target: 0
-      speed: 2
-      m_Value: 0
-    zGrid:
       m_Target: 1
       speed: 2
       m_Value: 1
+    zGrid:
+      m_Target: 0
+      speed: 2
+      m_Value: 0
   m_Rotation:
-    m_Target: {x: 0, y: 0, z: 0, w: 1}
+    m_Target: {x: 0.08897322, y: -0.5440873, z: 0.058165345, w: 0.83226854}
     speed: 2
-    m_Value: {x: 0, y: 0, z: 0, w: 1}
+    m_Value: {x: 0.08897315, y: -0.5440869, z: 0.058165304, w: 0.83226794}
   m_Size:
-    m_Target: 8.199443
+    m_Target: 12.21259
     speed: 2
-    m_Value: 8.199443
+    m_Value: 12.21259
   m_Ortho:
     m_Target: 1
     speed: 2
@@ -592,9 +592,9 @@ MonoBehaviour:
     height: 379
   m_TreeViewState:
     scrollPos: {x: 0, y: 0}
-    m_SelectedIDs: c4060000
+    m_SelectedIDs: 0cc1fdff
     m_LastClickedID: 0
-    m_ExpandedIDs: d6fbffff00000000302600004a260000
+    m_ExpandedIDs: f40ffeffd6fbffff000000003c260000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -654,19 +654,19 @@ MonoBehaviour:
     m_ShowAllHits: 0
     m_SearchArea: 0
     m_Folders:
-    - Assets/TotNotScratch/Scripts
+    - Assets/Resources/Terrain
   m_ViewMode: 1
   m_StartGridSize: 16
   m_LastFolders:
-  - Assets/TotNotScratch/Scripts
+  - Assets/Resources/Terrain
   m_LastFoldersGridSize: 16
   m_LastProjectPath: C:\Users\melsov\Documents\unities\TotNotScratch
   m_IsLocked: 0
   m_FolderTreeState:
-    scrollPos: {x: 0, y: 0}
-    m_SelectedIDs: dc250000
-    m_LastClickedID: 9692
-    m_ExpandedIDs: 00000000da2400007c2500004a2b000000ca9a3bffffff7f
+    scrollPos: {x: 0, y: 60}
+    m_SelectedIDs: 162a0000
+    m_LastClickedID: 10774
+    m_ExpandedIDs: 00000000dc2400002a2500003c2500007e25000080250000aa250000e025000000ca9a3bffffff7f
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -694,7 +694,7 @@ MonoBehaviour:
     scrollPos: {x: 0, y: 0}
     m_SelectedIDs: 
     m_LastClickedID: 0
-    m_ExpandedIDs: 00000000da2400003a2500007c250000a6250000dc250000
+    m_ExpandedIDs: 00000000dc2400007e25000080250000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -725,15 +725,15 @@ MonoBehaviour:
     m_ExpandedInstanceIDs: 300700001025000006460000104600004222ffffba240000b4240000082500004c250000d6d5fdff80cefdff943802001e260000b2250000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
-      m_Name: Scripts
-      m_OriginalName: Scripts
+      m_Name: Terrain
+      m_OriginalName: Terrain
       m_EditFieldRect:
         serializedVersion: 2
         x: 0
         y: 0
         width: 0
         height: 0
-      m_UserData: 9692
+      m_UserData: 10774
       m_IsWaitingForDelay: 0
       m_IsRenaming: 0
       m_OriginalEventType: 0

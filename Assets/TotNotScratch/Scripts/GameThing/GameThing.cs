@@ -5,6 +5,16 @@ using UnityEditor;
 using System;
 using System.IO;
 
+/*
+ * TODO:
+ * DONE: change background / color
+ * DONE: gen particles
+ * maps and sectors
+ * sprite sheet animator?? (that's not a particle system)
+ * joints
+seek slowly slow turns * or just lookAt with lerp if not already exists
+ *  */
+
 [CustomEditor(typeof(GameThing), true)]
 public class GameThingDataEditor : Editor
 {
@@ -63,6 +73,14 @@ public class GameThing : MonoBehaviour {
     private DirectionKeyType directionKeyType;
     private DirectionKeySet directionKeySet;
     private bool useDirectionKeys { get { return directionKeyType != DirectionKeyType.NONE; } }
+    [SerializeField, Header("Which movement style?")]
+    private DirectionKeyMovementType directionKeyMovementType;
+    [SerializeField, Header("Platformer jump force (value will be multiplied by rb mass)")]
+    protected float platformerJumpForce = 100f;
+
+
+    private DirectionInput mv;
+
     [SerializeField, Header("Other keys we want to use")]
     private KeyCode[] otherKeys;
 
@@ -70,6 +88,8 @@ public class GameThing : MonoBehaviour {
     protected float speed = 4f;
 
     protected bool isAClone;
+
+    #region lazy-properties
 
     private CursorInputClient _cursorInputClient;
     private CursorInputClient cursorInputClient {
@@ -97,7 +117,7 @@ public class GameThing : MonoBehaviour {
         get {
             if (!_rb) {
                 _rb = ComponentHelper.AddIfNotPresent<Rigidbody2D>(transform);
-                _rb.isKinematic = true;
+                _rb.isKinematic = directionKeyMovementType != DirectionKeyMovementType.PLATFORMER;
             }
             return _rb;
         }
@@ -109,6 +129,42 @@ public class GameThing : MonoBehaviour {
     }
 
     private TextMesh _sayTextMesh;
+    private TextMesh sayTextMesh {
+        get {
+            if (!_sayTextMesh) {
+                _sayTextMesh = ComponentHelper.FindInChildrenOrAddChildFromResourcesPrefab<TextMesh>(
+                    transform, PrefabHelper.PrefabGameThingHelperFolder + "/SayText", 
+                    Vector3.Scale(colldr.bounds.extents, new Vector3(.8f, .9f, 0f)) + Vector3.forward * -1f);
+            }
+            return _sayTextMesh;
+        }
+    }
+
+    private GTParticleSet _particleSet;
+    private GTParticleSet particlesSet {
+        get {
+            if(_particleSet == null) {
+                _particleSet = new GTParticleSet(transform);
+            }
+            return _particleSet;
+        }
+    }
+
+    private GTAnimator _gtAnimator;
+    protected GTAnimator gtAnimator {
+        get {
+            if(_gtAnimator == null) {
+                _gtAnimator = GetComponent<GTAnimator>();
+            }
+            return _gtAnimator;
+        }
+    }
+
+    #endregion
+
+
+    private GroundedDetector groundedDetector;
+
     private bool alreadyTalking;
 
     [SerializeField]
@@ -117,19 +173,11 @@ public class GameThing : MonoBehaviour {
     [SerializeField]
     private GameThingPhysicsType _physicsType;
 
-    private TextMesh sayTextMesh {
-        get {
-            if (!_sayTextMesh) {
-                _sayTextMesh = ComponentHelper.FindInChildrenOrAddChildFromResourcesPrefab<TextMesh>(transform, PrefabHelper.PrefabGameThingHelperFolder + "/SayText", colldr.bounds.extents + Vector3.forward * -1f);
-            }
-            return _sayTextMesh;
-        }
-    }
-
     private void Awake() {
         if (useDirectionKeys) {
             directionKeySet = new DirectionKeySet(directionKeyType == DirectionKeyType.WASD);
         }
+        groundedDetector = GetComponentInChildren<GroundedDetector>();
         awake();
     }
 
@@ -212,17 +260,23 @@ public class GameThing : MonoBehaviour {
 
     protected virtual void collisionEnterWithSomethingTagged(TaggedCollision tag) { }
 
+    protected bool isGrounded {
+        get {
+            if(!groundedDetector) { return true; } //If no grounded detector, allow infinite multi-jumps
+            return groundedDetector.isGrounded();
+        }
+    }
+
     #endregion
 
     #region helpful-data
     
     protected float time { get { return Time.time; } }
 
-    protected float sinWaveTime(float period) {
-        return Mathf.Sin(time * period / (2 * Mathf.PI));
-    }
+    protected float sinWaveTime(float period) { return Mathf.Sin(time * period / (2 * Mathf.PI)); }
 
     protected Vector3 position { get { return rb.transform.position; } }
+
     protected float rotationDegrees { get { return rb.rotation; } }
 
     #endregion
@@ -265,24 +319,56 @@ public class GameThing : MonoBehaviour {
 
     private void checkKeys() {
         if(useDirectionKeys) {
-            Vector3 mv = Vector3.zero;
-            if(Input.GetKey(directionKeySet.up)) {
-                mv += Vector3.up;
-            } else if (Input.GetKey(directionKeySet.down)) {
-                mv += Vector3.down;
+            switch(directionKeyMovementType) {
+                case DirectionKeyMovementType.PLATFORMER:
+                    checkPlatformerKeys();
+                    break;
+                case DirectionKeyMovementType.NORTH_SOUTH_EAST_WEST:
+                    checkNSEWKeys();
+                    break;
+                case DirectionKeyMovementType.NOT_USING_DIRECTION_KEYS:
+                default:
+                    break;
             }
-            if (Input.GetKey(directionKeySet.right)) {
-                mv += Vector3.right;
-            } else if (Input.GetKey(directionKeySet.left)) {
-                mv += Vector3.left;
-            }
-            moveInDirection(mv.normalized);
         }
+
+        //Other keys
         foreach(KeyCode kc in otherKeys) {
             if(Input.GetKeyDown(kc)) {
                 keyDown(kc);
             }
         }
+    }
+
+    private void checkNSEWKeys() {
+        Vector3 mv = Vector3.zero;
+        if (Input.GetKey(directionKeySet.up)) {
+            mv.y = 1;
+        } else if (Input.GetKey(directionKeySet.down)) {
+            mv.y = -1;
+        }
+        if (Input.GetKey(directionKeySet.right)) {
+            mv += Vector3.right;
+        } else if (Input.GetKey(directionKeySet.left)) {
+            mv += Vector3.left;
+        }
+
+        moveInDirection(mv.normalized);
+    }
+
+    private void checkPlatformerKeys() {
+        mv = new DirectionInput();
+        if (Input.GetKeyDown(directionKeySet.up)) {
+            mv.vertical = 1;
+        } else if (Input.GetKey(directionKeySet.down)) {
+            mv.vertical = -1;
+        }
+        if (Input.GetKey(directionKeySet.right)) {
+            mv.horiztonal = -1;
+        } else if (Input.GetKey(directionKeySet.left)) {
+            mv.horiztonal = 1;
+        }
+        movePlatformer(mv);
     }
 
     protected virtual void keyDown(KeyCode kc) {
@@ -342,8 +428,35 @@ public class GameThing : MonoBehaviour {
 
     #endregion
 
+    #region particles
+
+    protected void addParticles(string particlePrefabName, Vector3 localOffset = default(Vector3)) {
+        particlesSet.getOrAddParticles(particlePrefabName, localOffset);
+    }
+
+    protected void playParticles(string particleName) { particlesSet.play(particleName); }
+
+    protected void stopParticles(string particleName) { particlesSet.stop(particleName); }
+
+    protected void destroyParticles(string particleName) { particlesSet.destroyParticles(particleName); }
+
+    #endregion
+
+
+    protected void setBackground(string backgroundInBackgroundsFolderName) { BackgroundManager.Instance.setBackground(backgroundInBackgroundsFolderName); } 
+
+    protected void setBackgroundColor(Color c) { BackgroundManager.Instance.setColor(c); }
+
+    protected void moveForward() { moveInDirection(rb.transform.right); }
+
     protected virtual void moveInDirection(Vector3 dir) {
         rb.MovePosition(transform.position + dir * speed * Time.deltaTime);
+    }
+
+    protected virtual void movePlatformer(DirectionInput mv) {
+        boost((Vector2.up * (isGrounded ? 1f : 0f) * mv.vertical * platformerJumpForce * rb.mass + 
+            Vector2.right * (isGrounded ? 1f : .5f) * mv.horiztonal * -1f * speed) 
+            * rb.mass);
     }
 
     protected virtual void moveTo(Vector3 global) {
@@ -362,9 +475,16 @@ public class GameThing : MonoBehaviour {
         rb.MoveRotation(rb.rotation + byDegrees);
     }
 
-    protected void lookAt(Vector3 target) {
-        rb.MoveRotation(Angle.angle(target - transform.position));
+    protected void lookAt(Vector3 target) { //TODO: lerpLook
+        //rb.MoveRotation(Angle.angle(target - transform.position));
+        slerpLookAt(target, 1f);
     }
+
+    protected void slerpLookAt(Vector3 target, float slerp) {
+        float ang = Angle.angle(Vector3.Slerp(rb.transform.right, (target - transform.position), slerp));
+        rb.MoveRotation(ang);
+    }
+
 
 
     protected void changeColor(Color c) {
@@ -390,9 +510,30 @@ public class GameThing : MonoBehaviour {
         }
     }
 
+    protected struct DirectionInput
+    {
+        public int vertical, horiztonal;
+
+        public bool isMovingUpwards() {
+            return vertical > 0;
+        }
+
+        public bool isMovingRight() {
+            return horiztonal > 0;
+        }
+
+        public bool isMovingLeft() {
+            return horiztonal < 0;
+        }
+
+        public Vector3 toVector3() { return new Vector3(horiztonal, vertical); }
+    }
+
 }
 
 public enum DirectionKeyType { NONE, ARROWS, WASD }
+
+public enum DirectionKeyMovementType { NOT_USING_DIRECTION_KEYS, NORTH_SOUTH_EAST_WEST, PLATFORMER }
 
 public struct DirectionKeySet
 {
@@ -412,6 +553,8 @@ public struct DirectionKeySet
         }
     }
 }
+
+
 
 public enum GameThingPhysicsType
 {

@@ -1,0 +1,70 @@
+﻿<!doctype html>
+<html lang="en-us">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Unity WebGL Player | Duks </title>
+    <link rel="stylesheet" href="stylez.css">
+    <link rel="shortcut icon" href="TemplateData/favicon.ico" />
+    <script src="Progress.js"></script>
+    <style>
+   
+    </style>
+</head>
+<body class="template" bgcolor="#555">
+        <canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()"></canvas>
+        <div id="logo" >Duks</div>
+<script type="text/javascript">
+    function fade(element) {
+        var op = 3;  
+        var timer = setInterval(function () {
+            if (op <= 0.1) {
+                clearInterval(timer);
+                element.style.display = 'none';
+            }
+            element.style.opacity = op;
+            element.style.filter = 'alpha(opacity=' + op * 100 + ")";
+            op -= op * 0.1;
+        }, 50);
+    }
+    var logo = document.getElementById("logo");
+    fade(logo);
+</script>
+
+<!-- Progress -->
+    <script type="text/javascript" src="https://code.createjs.com/tweenjs-0.6.0.min.js"></script>
+<script type="text/javascript" src="CSSPlugin.js"></script>
+
+    <div id="loadingBox">
+        <div id="bgBar"></div>
+        <div id="progressBar"></div>
+        <p id="loadingInfo">Loading...</p>
+    </div>
+    <img id="spinner" src="ajax-loader.gif" style="display: none; margin: 0 auto" />
+<!-- END Progress-->
+<!--
+    <p class="header"><span>Unity WebGL Player | </span>Catapult</p>
+    <div class="template-wrap clear">
+        <div class="logo"></div>
+        <div class="fullscreen"><img src="TemplateData/fullscreen.png" width="38" height="38" alt="Fullscreen" title="Fullscreen" onclick="SetFullscreen(1);" /></div>
+        <div class="title">Catapult</div>
+    </div>
+    <p class="footer">&laquo; created with <a href="http://unity3d.com/" title="Go to unity3d.com">Unity</a> &raquo;</p>
+-->
+    %UNITY_WEBGL_LOADER_GLUE%
+
+    <!--<script type='text/javascript'>
+  var Module = {
+    TOTAL_MEMORY: 268435456,
+    errorhandler: null,			// arguments: err, url, line. This function must return 'true' if the error is handled, otherwise 'false'
+    compatibilitycheck: null,
+    dataUrl: "Release/catapult.data",
+    codeUrl: "Release/catapult.js",
+    memUrl: "Release/catapult.mem",
+    
+  };
+</script>
+<script src="Release/UnityLoader.js"></script>-->
+
+</body>
+</html>

@@ -8,7 +8,10 @@ public class GTRotater : GameThing
 {
     protected override void keyDown(KeyCode kc) {
         if (kc == KeyCode.R) {
-            changeColor(Color.red);
+            setBackground("Stripes");
+            setBackgroundColor(Color.green);
+            stopParticles("Bubbles");
+
         }
     }
 
@@ -24,6 +27,7 @@ public class GTRotater : GameThing
     protected override void collisionEnterWithSomethingTagged(TaggedCollision tag) {
         if(tag == "MildlyBad") {
             say("i hit a something mildly bad");
+            playParticles("Bubbles");
         }
     }
 }
