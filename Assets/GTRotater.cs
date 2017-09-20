@@ -4,7 +4,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-//Test gameThing sub class
+//Test gameThing sub class 
+/* ***** */
 public class GTRotater : GameThing
 {
     protected override void keyDown(KeyCode kc) {
