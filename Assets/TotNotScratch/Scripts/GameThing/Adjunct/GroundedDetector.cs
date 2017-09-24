@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,13 +8,13 @@ using UnityEngine.Assertions;
 public class GroundedDetector : MonoBehaviour
 {
     private Collider2D colldr;
-    private Collider2D[] overlappingColliders;
-    private ContactFilter2D contactFilter;
+	private List< Collider2D> overlappingColliders = new List<Collider2D>();
+    //private ContactFilter2D contactFilter;
 
     private void Awake() {
-        overlappingColliders = new Collider2D[7];
-        contactFilter = new ContactFilter2D();
-        contactFilter.layerMask = LayerMask.GetMask("GameThingPhysics", "GameThingTerrain");
+		overlappingColliders = new List<Collider2D> ();
+      //  contactFilter = new ContactFilter2D();
+        //contactFilter.layerMask = LayerMask.GetMask("GameThingPhysics", "GameThingTerrain");
         colldr = GetComponent<Collider2D>();
         Assert.IsTrue(colldr && colldr.isTrigger, "GroundedDector needs a trigger collider");
     }
@@ -44,18 +44,26 @@ public class GroundedDetector : MonoBehaviour
     }
 
     private void checkOverlaps() {
-        for(int i=0; i< overlappingColliders.Length; ++i) {
-            overlappingColliders[i] = null;
-        }
-        colldr.OverlapCollider(contactFilter, overlappingColliders);
+//        for(int i=0; i< overlappingColliders.Length; ++i) {
+//            overlappingColliders[i] = null;
+//        }
+		
+        //colldr.OverlapCollider(contactFilter, overlappingColliders);
     }
 
     private void OnTriggerEnter2D(Collider2D collider) {
+		if (!overlappingColliders.Contains (collider)) {
+			overlappingColliders.Add (collider);
+		}
         checkOverlaps();
     }
 
     private void OnTriggerExit2D(Collider2D collision) {
+		if (overlappingColliders.Contains (collision)) {
+			overlappingColliders.Remove (collision);
+		}
         checkOverlaps();
     }
 
 }
+
