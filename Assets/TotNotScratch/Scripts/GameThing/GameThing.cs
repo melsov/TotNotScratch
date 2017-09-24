@@ -202,10 +202,10 @@ public class GameThing : MonoBehaviour {
 
     private IEnumerator waitThenCallLateStart() {
         yield return new WaitForSeconds(.4f);
-        LateStart();
+        lateStart();
     }
 
-    protected virtual void LateStart() { }
+    protected virtual void lateStart() { }
 
     #region physics
 
@@ -423,8 +423,12 @@ public class GameThing : MonoBehaviour {
 
     public void clone(Vector3 global) {
         GameThing cl = Instantiate<GameThing>(this);
+        cl.transform.position = global;
         cl.isAClone = true;
+        cl.onJustGotCloned();
     }
+
+    protected virtual void onJustGotCloned() {     }
 
     #endregion
 
@@ -442,6 +446,85 @@ public class GameThing : MonoBehaviour {
 
     #endregion
 
+    #region repeated-action
+
+    protected void repeatAction(float interval, int repeats, Action _action) {
+        repeatAction(interval, repeats, _action, false);
+    }
+
+    protected void repeatActionForever(float interval, Action _action) {
+        repeatAction(interval, -1, _action, false);
+    }
+
+    protected void repeatActionWaitInRealTime(float interval, int repeats, Action _action) {
+        repeatAction(interval, repeats, _action, true);
+    }
+
+    private void repeatAction(float interval, int repeats, Action _action, bool inRealTime) {
+        IntervalCallback ic = IntervalCallback.Attach(transform);
+        ic.setup(interval, _action, repeats, inRealTime);
+        ic.commence();
+    }
+
+    #endregion
+
+    #region visible-enable-disable
+
+    /// <summary>
+    /// Set false to hide this GameThing while still allowing it
+    /// to be active otherwise. True reveals.
+    /// </summary>
+    protected bool visible {
+        get {
+            return srendrr.enabled;
+        }
+        set {
+            srendrr.enabled = value;
+        }
+    }
+
+    /// <summary>
+    /// Set false to turn off this GameThing's game object. 
+    /// When inactive, it's as though the game thing and any components attached to it
+    /// and all of its children have been deleted; the only difference being that this can be undone
+    /// by setting active true again; whereas destroyed game objects can't be un-destroyed.
+    /// </summary>
+    public bool active {
+        get {
+            return gameObject.activeSelf;
+        }
+        set {
+            gameObject.SetActive(value);
+        }
+    }
+
+    /// <summary>
+    /// Set false to turn off this GameThing component. Unlike with active,
+    /// All other components and children, etc., will continue doing whatever they were doing.
+    /// </summary>
+    public bool isGameThingEnabled {
+        get {
+            return enabled;
+        }
+        set {
+            enabled = value;
+        }
+    }
+
+    /// <summary>
+    /// Destroy this GameThing's gameObject. Also destroys the gameThing component and all of its children, needless to say.
+    /// </summary>
+    public void getDestroyed() {
+        Destroy(gameObject);
+    }
+
+    private void OnDestroy() {
+        onWillBeDestroyed();
+    }
+
+    protected virtual void onWillBeDestroyed() {     }
+
+    #endregion
 
     protected void setBackground(string backgroundInBackgroundsFolderName) { BackgroundManager.Instance.setBackground(backgroundInBackgroundsFolderName); } 
 

@@ -1,17 +1,39 @@
 ﻿using UnityEngine;
+using UnityEditor;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
 
+[CustomEditor(typeof(GTAnimator), false)]
+public class GTAnimatorDataEditor : Editor
+{
+
+    public override void OnInspectorGUI() {
+        GTAnimator gt = (GTAnimator)target;
+        Animator animator = gt.GetComponent<Animator>();
+        if(!animator) {
+            GUI.backgroundColor = new Color(1f, .5f, .7f);
+            EditorGUILayout.LabelField("GTAnimator needs an animator component");
+            if(GUILayout.Button("Add an animator component")) {
+                gt.gameObject.AddComponent<Animator>();
+            }
+            return;
+        }
+
+        base.OnInspectorGUI();
+    }
+}
+
 public class GTAnimator : MonoBehaviour
 {
     
-    public enum AnimatorStateProtagonist
-    {
-        IDLE = -1, WALKING, HADOKEN, JUMPING
-    }
+    //public enum AnimatorStateProtagonist
+    //{
+    //    IDLE = -1, WALKING, HADOKEN, JUMPING
+    //}
+
 
     private Animator _animator;
     private Animator animator {
@@ -21,7 +43,6 @@ public class GTAnimator : MonoBehaviour
         }
     }
 
-   
 
     [SerializeField]
     protected string defaultActionStateParam = "ActionState";
@@ -29,20 +50,22 @@ public class GTAnimator : MonoBehaviour
     protected string isDeadParam = "IsDead";
 
 
-    public void idle() { setIntegerParam((int)AnimatorStateProtagonist.IDLE); }
+    //public void idle() { setMainIntegerParam((int)AnimatorStateProtagonist.IDLE); }
 
-    public void walk() { setIntegerParam((int)AnimatorStateProtagonist.WALKING); }
+    //public void walk() { setMainIntegerParam((int)AnimatorStateProtagonist.WALKING); }
 
-    public void jump() { setIntegerParam((int)AnimatorStateProtagonist.JUMPING); }
-    
-    public void hadoken() { setIntegerParam((int)AnimatorStateProtagonist.HADOKEN); }
+    //public void jump() { setMainIntegerParam((int)AnimatorStateProtagonist.JUMPING); }
 
-    public void die() { setBoolParam(isDeadParam, true); }
+    //public void hadoken() { setMainIntegerParam((int)AnimatorStateProtagonist.HADOKEN); }
+
+    public void die() {
+        setBoolParam(isDeadParam, true);
+    }
 
     public void revive() { setBoolParam(isDeadParam, false); }
 
 
-    public void setIntegerParam(int state) { setIntegerParam(defaultActionStateParam, state); }
+    public void setMainIntegerParam(int state) { setIntegerParam(defaultActionStateParam, state); }
 
     public void setIntegerParam(string param, int state) {
         animator.SetInteger(param, state);
@@ -57,6 +80,6 @@ public class GTAnimator : MonoBehaviour
     }
 
     public void returnToWalking() {
-        walk();
+        setMainIntegerParam(1);
     }
 }

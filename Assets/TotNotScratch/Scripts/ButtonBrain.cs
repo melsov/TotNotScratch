@@ -79,7 +79,7 @@ public class ButtonBrain : GameThing
 
     private int[] code = new int[] { 0, 1, 1, 1, 0 };
 
-    protected override void LateStart() {
+    protected override void lateStart() {
         for(int i=0; i<buttons.Length; ++i) {
             buttons[i].note = i;
         }

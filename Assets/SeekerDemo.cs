@@ -12,6 +12,10 @@ public class SeekerDemo : GameThing
     [SerializeField]
     private float rotationSlerp = .5f;
 
+    protected override void lateStart() {
+        setBackground("Stripes");
+    }
+
     protected override void fixedUpdate() {
         slerpLookAt(target.position, rotationSlerp);
         moveForward();

@@ -7,11 +7,12 @@ public class GTDemoAnimatedSptire : GameThing
 {
     protected override void keyDown(KeyCode kc) {
         if(kc == KeyCode.W) {
-            gtAnimator.jump();
+            gtAnimator.setIntegerParam("ActionState", 2);
             jump();
         }
         else if(kc == KeyCode.E) {
-            gtAnimator.hadoken();
+            gtAnimator.die();
+            //gtAnimator.hadoken();
         }
     }
 
