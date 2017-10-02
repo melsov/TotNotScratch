@@ -110,6 +110,7 @@
     <Compile Include="Assets\TotNotScratch\Scripts\Helpers\Singleton.cs" />
     <Compile Include="Assets\TotNotScratch\Scripts\Helpers\ViewPortHelper.cs" />
     <Compile Include="Assets\TotNotScratch\Scripts\Helpers\Watchable.cs" />
+    <Compile Include="Assets\TotNotScratch\Scripts\Managers\EventBroadcaster.cs" />
     <Compile Include="Assets\TotNotScratch\Scripts\MLMath\Angle.cs" />
     <Compile Include="Assets\TotNotScratch\Scripts\MLMath\MLMath.cs" />
     <Compile Include="Assets\TotNotScratch\Scripts\MLMath\MLRange.cs" />
@@ -121,6 +122,7 @@
     <Compile Include="Assets\TotNotScratch\Scripts\Movement\FixedRotation.cs" />
     <Compile Include="Assets\TotNotScratch\Scripts\Scale.cs" />
     <Compile Include="Assets\YOURNAME\Scripts\Droplet.cs" />
+    <Compile Include="Assets\YOURNAME\Scripts\Hero.cs" />
     <Compile Include="Assets\YOURNAME\Scripts\MouseFollower.cs" />
     <Compile Include="Assets\YOURNAME\Scripts\Spawner.cs" />
   </ItemGroup>
@@ -130,7 +132,6 @@
     <None Include="Assets\WebGLTemplates\FullWindow\TweenJS-master\LICENSE.txt" />
     <None Include="Assets\WebGLTemplates\FullWindow\TweenJS-master\VERSIONS.txt" />
     <None Include="Assets\WebGLTemplates\FullWindow\TweenJS-master\lib\README.txt" />
-    <None Include="ClassDiagram1.cd" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="GenerateTargetFrameworkMonikerAttribute" />

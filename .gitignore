@@ -33,5 +33,6 @@
 !*/
 
 Assets/YOURNAME/
+*.info
 
 #windows?

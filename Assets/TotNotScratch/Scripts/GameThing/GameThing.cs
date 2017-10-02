@@ -70,9 +70,9 @@ public class GameThing : MonoBehaviour {
     private VectorXY mouDownRelativePos;
 
     [SerializeField, Header("Which keys move this game thing?")]
-    private DirectionKeyType directionKeyType;
     private DirectionKeySet directionKeySet;
-    private bool useDirectionKeys { get { return directionKeyType != DirectionKeyType.NONE; } }
+    private DirectionKeys directionKeys;
+    private bool useDirectionKeys { get { return directionKeySet != DirectionKeySet.NONE; } }
     [SerializeField, Header("Which movement style?")]
     private DirectionKeyMovementType directionKeyMovementType;
     [SerializeField, Header("Platformer jump force (value will be multiplied by rb mass)")]
@@ -163,19 +163,19 @@ public class GameThing : MonoBehaviour {
     #endregion
 
 
-    private GroundedDetector groundedDetector;
+    protected GroundedDetector groundedDetector;
 
     private bool alreadyTalking;
 
     [SerializeField]
     private bool wantDBugMessages = true;
 
-    [SerializeField]
-    private GameThingPhysicsType _physicsType;
+    //[SerializeField]
+    //private GameThingPhysicsType _physicsType;
 
     private void Awake() {
         if (useDirectionKeys) {
-            directionKeySet = new DirectionKeySet(directionKeyType == DirectionKeyType.WASD);
+            directionKeys = new DirectionKeys(directionKeySet == DirectionKeySet.WASD);
         }
         groundedDetector = GetComponentInChildren<GroundedDetector>();
         awake();
@@ -192,8 +192,6 @@ public class GameThing : MonoBehaviour {
         cursorInputClient.addDragAction((VectorXY global) => { _mouseDrag(global); });
         cursorInputClient.addUpAction((VectorXY global) => { _mouseUp(global); });
 
-        setLayerWithPhysicsType();
-
         StartCoroutine(waitThenCallLateStart());
         start();
     }
@@ -208,34 +206,6 @@ public class GameThing : MonoBehaviour {
     protected virtual void lateStart() { }
 
     #region physics
-
-    private void setLayerWithPhysicsType() {
-        physicsType = _physicsType;
-    }
-
-    protected GameThingPhysicsType physicsType {
-        set {
-           switch (value) {
-                case GameThingPhysicsType.BUMPS_INTO_OTHER_GAMETHINGS:
-                    gameObject.layer = LayerMask.NameToLayer("GameThingPhysics");
-                    break;
-                case GameThingPhysicsType.NO_COLLISIONS:
-                    gameObject.layer = LayerMask.NameToLayer("NoCollisions");
-                    break;
-                case GameThingPhysicsType.NON_OF_THE_ABOVE:
-                default:
-                    break;
-            }
-        }
-        get {
-            if (gameObject.layer == LayerMask.NameToLayer("GameThingPhysics")) {
-                return GameThingPhysicsType.BUMPS_INTO_OTHER_GAMETHINGS;
-            } else if (gameObject.layer == LayerMask.NameToLayer("NoCollisions")) {
-                return GameThingPhysicsType.NO_COLLISIONS;
-            }
-            return GameThingPhysicsType.NON_OF_THE_ABOVE;
-        }
-    }
 
     protected void physicsWorksOnMe(bool yesItDoes) {
         rb.isKinematic = !yesItDoes;
@@ -342,14 +312,14 @@ public class GameThing : MonoBehaviour {
 
     private void checkNSEWKeys() {
         Vector3 mv = Vector3.zero;
-        if (Input.GetKey(directionKeySet.up)) {
+        if (Input.GetKey(directionKeys.up)) {
             mv.y = 1;
-        } else if (Input.GetKey(directionKeySet.down)) {
+        } else if (Input.GetKey(directionKeys.down)) {
             mv.y = -1;
         }
-        if (Input.GetKey(directionKeySet.right)) {
+        if (Input.GetKey(directionKeys.right)) {
             mv += Vector3.right;
-        } else if (Input.GetKey(directionKeySet.left)) {
+        } else if (Input.GetKey(directionKeys.left)) {
             mv += Vector3.left;
         }
 
@@ -358,14 +328,14 @@ public class GameThing : MonoBehaviour {
 
     private void checkPlatformerKeys() {
         mv = new DirectionInput();
-        if (Input.GetKeyDown(directionKeySet.up)) {
+        if (Input.GetKeyDown(directionKeys.up)) {
             mv.vertical = 1;
-        } else if (Input.GetKey(directionKeySet.down)) {
+        } else if (Input.GetKey(directionKeys.down)) {
             mv.vertical = -1;
         }
-        if (Input.GetKey(directionKeySet.right)) {
+        if (Input.GetKey(directionKeys.right)) {
             mv.horiztonal = -1;
-        } else if (Input.GetKey(directionKeySet.left)) {
+        } else if (Input.GetKey(directionKeys.left)) {
             mv.horiztonal = 1;
         }
         movePlatformer(mv);
@@ -558,8 +528,7 @@ public class GameThing : MonoBehaviour {
         rb.MoveRotation(rb.rotation + byDegrees);
     }
 
-    protected void lookAt(Vector3 target) { //TODO: lerpLook
-        //rb.MoveRotation(Angle.angle(target - transform.position));
+    protected void lookAt(Vector3 target) { 
         slerpLookAt(target, 1f);
     }
 
@@ -614,15 +583,15 @@ public class GameThing : MonoBehaviour {
 
 }
 
-public enum DirectionKeyType { NONE, ARROWS, WASD }
+public enum DirectionKeySet { NONE, ARROWS, WASD }
 
 public enum DirectionKeyMovementType { NOT_USING_DIRECTION_KEYS, NORTH_SOUTH_EAST_WEST, PLATFORMER }
 
-public struct DirectionKeySet
+public struct DirectionKeys
 {
     public KeyCode up, down, right, left;
 
-    public DirectionKeySet(bool isWASD) {
+    public DirectionKeys(bool isWASD) {
         if(isWASD) {
             up = KeyCode.W;
             down = KeyCode.S;
@@ -639,7 +608,7 @@ public struct DirectionKeySet
 
 
 
-public enum GameThingPhysicsType
-{
-    NO_COLLISIONS, BUMPS_INTO_OTHER_GAMETHINGS, NON_OF_THE_ABOVE
-}
+//public enum GameThingPhysicsType
+//{
+//    NO_COLLISIONS, BUMPS_INTO_OTHER_GAMETHINGS, NONE_OF_THE_ABOVE
+//}
