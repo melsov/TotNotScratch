@@ -8,17 +8,51 @@ using System.Collections;
 
 public class Announcer : PhoenixLikeSingleton<Announcer>
 {
-    [SerializeField]
-    private Text text;
+    private Text _text;
+    private Text text {
+        get {
+            if(!_text) {
+                _text = panel.GetComponentInChildren<Text>();
+            }
+            return _text;
+        }
+    }
 
-    private RectTransform panel;
+    [SerializeField, Header("Drag a Panel with a Text component")]
+    [Header("attached to itself or a child")]
+    private RectTransform _panel;
+    private RectTransform panel {
+        get {
+            if(!_panel) {
+                _panel = Instantiate<RectTransform>(Resources.Load<RectTransform>("CanvasUI/Panel"));
+                _panel.SetParent(canvas.transform);
+            }
+            return _panel;
+        }
+    }
+    
+    private Canvas _canvas;
+    private Canvas canvas {
+        get {
+            _canvas = FindObjectOfType<Canvas>();
+            if (!_canvas) {
+                _canvas = Instantiate<Canvas>(Resources.Load<Canvas>("CanvasUI/Canvas"));
+            }
+            return _canvas;
+        }
+    }
 
     private bool alreadyAnnouncing;
 
     private void Start() {
-        panel = text.transform.parent.GetComponent<RectTransform>();
+        //panel = text.transform.parent.GetComponent<RectTransform>();
+
         hide();
     }
+
+
+
+
 
     private void hide() {
         panel.gameObject.SetActive(false);

@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEditor;
 using System;
 using System.IO;
+using UnityEngine.SceneManagement;
 
 /*
  * TODO:
@@ -88,6 +89,8 @@ public class GameThing : MonoBehaviour {
     protected float speed = 4f;
 
     protected bool isAClone;
+
+    protected bool ignoreKeyInput;
 
     #region lazy-properties
 
@@ -288,6 +291,7 @@ public class GameThing : MonoBehaviour {
     #region keyboard
 
     private void checkKeys() {
+        if(ignoreKeyInput) { return; }
         if(useDirectionKeys) {
             switch(directionKeyMovementType) {
                 case DirectionKeyMovementType.PLATFORMER:
@@ -416,7 +420,26 @@ public class GameThing : MonoBehaviour {
 
     #endregion
 
-    #region repeated-action
+    #region wait-repeated-action
+
+    protected void waitThen(float seconds, Action _action) {
+        StartCoroutine(_waitThen(seconds, _action));
+    }
+
+    protected void waitRealtimeThen(float seconds, Action _action) {
+        StartCoroutine(_waitThen(seconds, _action, true));
+    }
+
+    private IEnumerator _waitThen(float seconds, Action _action, bool realtime = false) {
+        if (realtime) {
+            yield return new WaitForSecondsRealtime(seconds);
+        } else {
+            yield return new WaitForSeconds(seconds);
+        }
+        if (_action != null) {
+            _action.Invoke();
+        }
+    }
 
     protected void repeatAction(float interval, int repeats, Action _action) {
         repeatAction(interval, repeats, _action, false);
@@ -494,6 +517,27 @@ public class GameThing : MonoBehaviour {
 
     protected virtual void onWillBeDestroyed() {     }
 
+    #endregion
+
+    #region levels-scenes
+
+    protected Scene activeScene {
+        get {
+            return SceneManager.GetActiveScene();
+        }
+    }
+
+    protected bool isFinalScene {
+        get {
+            return SceneManager.sceneCountInBuildSettings - 1 == activeScene.buildIndex;
+        }
+    }
+
+    protected void loadNextScene() {
+        if(!isFinalScene) {
+            SceneManager.LoadScene(activeScene.buildIndex + 1);
+        }
+    }
     #endregion
 
     protected void setBackground(string backgroundInBackgroundsFolderName) { BackgroundManager.Instance.setBackground(backgroundInBackgroundsFolderName); } 

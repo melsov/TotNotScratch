@@ -1,4 +1,4 @@
 sceneSetups:
-- path: Assets/TotNotScratch/Scenes/CollisionTestsScene.unity
+- path: Assets/YOURNAME/Scenes/Spawner.unity
   isLoaded: 1
   isActive: 1

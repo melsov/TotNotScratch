@@ -9,7 +9,6 @@ public class GroundedDetector : MonoBehaviour
 {
 
     private Collider2D colldr;
-    private Rigidbody2D rb;
 
     private ContactPoint2D[] contactPoints;
     private ContactFilter2D filter;
@@ -23,7 +22,6 @@ public class GroundedDetector : MonoBehaviour
     private void Awake() {
         contactPoints = new ContactPoint2D[20];
         colldr = GetComponent<Collider2D>();
-        rb = GetComponent<Rigidbody2D>();
         filter.layerMask = LayerMask.GetMask("GameThingPhysics", "GameThingTerrain");
     }
 
