@@ -23,8 +23,8 @@
 !*.ttf
 !*.TTF
 !*.FON
-!*.asset
-!*ProjectVersion.txt
+#!*.asset
+#!*ProjectVersion.txt
 
 *.meta
 
