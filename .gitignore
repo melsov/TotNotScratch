@@ -39,6 +39,7 @@
 *.csproj
 
 Library/
+Library/*
 ProjectSettings/
 
 Assets/YOURNAME/
