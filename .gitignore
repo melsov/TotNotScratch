@@ -38,6 +38,13 @@
 *.sln
 *.csproj
 
+
+*.prefs
+*.db
+*.xml
+*.dll
+
+
 Library/
 Library/*
 ProjectSettings/
