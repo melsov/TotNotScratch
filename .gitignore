@@ -19,7 +19,7 @@
 !*.JPG
 !*.wav
 !*.WAV
-!*ProjectSettings/
+#!*ProjectSettings/
 !*.ttf
 !*.TTF
 !*.FON
@@ -30,9 +30,16 @@
 
 #ignore scenes (don't let updates overwrite students' scenes)
 *.unity
+!*BlankSceneCOPY-DONT-USE-ORIGINAL.unity
 
 #even if in sub-directories
 !*/
+
+*.sln
+*.csproj
+
+Library/
+ProjectSettings/
 
 Assets/YOURNAME/
 *.info
