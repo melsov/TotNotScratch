@@ -1,6 +1,5 @@
 
 #.meta
-#.unity
 #.csproj
 #.sln
 #Temp/
@@ -29,10 +28,11 @@
 
 *.meta
 
+#ignore scenes (don't let updates overwrite students' scenes)
+*.unity
+
 #even if in sub-directories
 !*/
 
 Assets/YOURNAME/
 *.info
-
-#windows?

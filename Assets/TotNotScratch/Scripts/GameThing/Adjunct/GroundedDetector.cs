@@ -5,6 +5,19 @@ using System.Linq;
 using System.Text;
 using UnityEngine.Assertions;
 
+public struct GroundedInfo
+{
+    public bool grounded;
+    public Vector2 groundNormal;
+
+    public GroundedInfo(bool grounded, Vector2 groundNormal) {
+        this.grounded = grounded;
+        this.groundNormal = groundNormal;
+    }
+
+    public static implicit operator bool(GroundedInfo gi) { return gi.grounded; }
+}
+
 public class GroundedDetector : MonoBehaviour
 {
 
@@ -32,16 +45,19 @@ public class GroundedDetector : MonoBehaviour
         }
     }
 
-    public bool isGrounded() {
+    public GroundedInfo isGrounded() {
+
         foreach (ContactPoint2D cp in getContactPoints()) {
 
             if (Vector2.Dot(Vector2.up, cp.normal) > steepTolerance) {
-                return true;
+                return new GroundedInfo(true, cp.normal);
             }
 
         }
-        return false;
+        return new GroundedInfo(false, Vector2.zero);
     }
+
+    
 
 
 

@@ -172,6 +172,13 @@ public class GameThing : MonoBehaviour {
 
     [SerializeField]
     private bool wantDBugMessages = true;
+    private int lastHorizontalMove;
+    [SerializeField]
+    private float jumpSpeedScaler = .4f;
+    private Vector2 lastGroundNormal;
+    private float wallBoost;
+    [SerializeField, Header("Inclines slow down platformers. setting this >1 will speed them up")]
+    private float inclineScaler;
 
     //[SerializeField]
     //private GameThingPhysicsType _physicsType;
@@ -233,9 +240,9 @@ public class GameThing : MonoBehaviour {
 
     protected virtual void collisionEnterWithSomethingTagged(TaggedCollision tag) { }
 
-    protected bool isGrounded {
+    protected GroundedInfo isGrounded {
         get {
-            if(!groundedDetector) { return true; } //If no grounded detector, allow infinite multi-jumps
+            if(!groundedDetector) { return new GroundedInfo(true, Vector2.up); } //If no grounded detector, allow infinite multi-jumps
             return groundedDetector.isGrounded();
         }
     }
@@ -441,6 +448,18 @@ public class GameThing : MonoBehaviour {
         }
     }
 
+    //TODO: slow down time for...
+
+    protected void pauseGameFor(float seconds, Action _action = null) {
+        Time.timeScale = 0f;
+        waitRealtimeThen(Mathf.Max(0f, seconds), () => {
+            Time.timeScale = 1f;
+            if(_action != null) {
+                _action.Invoke();
+            }
+        });
+    }
+
     protected void repeatAction(float interval, int repeats, Action _action) {
         repeatAction(interval, repeats, _action, false);
     }
@@ -478,8 +497,8 @@ public class GameThing : MonoBehaviour {
 
     /// <summary>
     /// Set false to turn off this GameThing's game object. 
-    /// When inactive, it's as though the game thing and any components attached to it
-    /// and all of its children have been deleted; the only difference being that this can be undone
+    /// When inactive, it's as though the game thing has been deleted;
+    /// the only difference being that this can be undone
     /// by setting active true again; whereas destroyed game objects can't be un-destroyed.
     /// </summary>
     public bool active {
@@ -538,6 +557,11 @@ public class GameThing : MonoBehaviour {
             SceneManager.LoadScene(activeScene.buildIndex + 1);
         }
     }
+
+    protected void loadFirstScene() {
+        SceneManager.LoadScene(0);
+    }
+
     #endregion
 
     protected void setBackground(string backgroundInBackgroundsFolderName) { BackgroundManager.Instance.setBackground(backgroundInBackgroundsFolderName); } 
@@ -551,9 +575,20 @@ public class GameThing : MonoBehaviour {
     }
 
     protected virtual void movePlatformer(DirectionInput mv) {
-        boost((Vector2.up * (isGrounded ? 1f : 0f) * mv.vertical * platformerJumpForce * rb.mass + 
-            Vector2.right * (isGrounded ? 1f : .5f) * mv.horiztonal * -1f * speed) 
+        GroundedInfo _groundedInfo = isGrounded;
+        if (_groundedInfo) {
+            lastHorizontalMove = mv.horiztonal;
+            lastGroundNormal = _groundedInfo.groundNormal;
+            wallBoost = Mathf.Abs(Vector2.Dot(lastGroundNormal, Vector2.right));
+            //wallBoost = wallBoost > .7f ? wallBoost : 0f;
+        }
+        boost((Vector2.up * (_groundedInfo ? 1f : 0f) * mv.vertical * platformerJumpForce + 
+            Vector2.right * (_groundedInfo ? 1f + (inclineScaler * Mathf.Min( wallBoost, .6f)) : jumpSpeedScaler * (1 + wallBoost)) * lastHorizontalMove * -1f * speed )
             * rb.mass);
+    }
+
+    private void boost(object p) {
+        throw new NotImplementedException();
     }
 
     protected virtual void moveTo(Vector3 global) {
