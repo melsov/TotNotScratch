@@ -48,6 +48,7 @@
 Library/
 Library/*
 ProjectSettings/
+.vs/
 
 Assets/YOURNAME/
 *.info
