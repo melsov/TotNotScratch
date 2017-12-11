@@ -166,6 +166,10 @@ public class GameThing : MonoBehaviour {
     #endregion
 
 
+    [SerializeField, Header("Ignore terrain collisions while moving upwards")]
+    protected bool ignoreTerrainWhileMovingUp;
+    protected Collider2D feet;
+
     protected GroundedDetector groundedDetector;
 
     private bool alreadyTalking;
@@ -179,9 +183,6 @@ public class GameThing : MonoBehaviour {
     private float wallBoost;
     [SerializeField, Header("Inclines slow down platformers. setting this >1 will speed them up")]
     private float inclineScaler;
-
-    //[SerializeField]
-    //private GameThingPhysicsType _physicsType;
 
     private void Awake() {
         if (useDirectionKeys) {
@@ -203,8 +204,24 @@ public class GameThing : MonoBehaviour {
         cursorInputClient.addUpAction((VectorXY global) => { _mouseUp(global); });
 
         StartCoroutine(waitThenCallLateStart());
+        if(ignoreTerrainWhileMovingUp) {
+            feet = findFeet();
+            StartCoroutine(ignoreTerrainWhileUp());
+
+        }
         start();
     }
+
+    public Collider2D findFeet() {
+        foreach(Collider2D coll in GetComponentsInChildren<Collider2D>()) {
+            if (coll.gameObject == gameObject) { continue; }
+            if (coll.name.ToLower().Equals("feet")) {
+                return coll;
+            }
+        }
+        return colldr;
+    }
+
 
     protected virtual void start() { }
 
@@ -244,6 +261,19 @@ public class GameThing : MonoBehaviour {
         get {
             if(!groundedDetector) { return new GroundedInfo(true, Vector2.up); } //If no grounded detector, allow infinite multi-jumps
             return groundedDetector.isGrounded();
+        }
+    }
+    
+    private IEnumerator ignoreTerrainWhileUp() {
+        int layer = feet.gameObject.layer;
+        
+        while(true) {
+            if(ignoreTerrainWhileMovingUp) {
+                if( (LayerMask.NameToLayer("IgnoreTerrain") == feet.gameObject.layer) != rb.velocity.y > .05f) {
+                    feet.gameObject.layer = rb.velocity.y > .05f ? LayerMask.NameToLayer("IgnoreTerrain") : layer;
+                }
+            }
+            yield return new WaitForFixedUpdate();
         }
     }
 

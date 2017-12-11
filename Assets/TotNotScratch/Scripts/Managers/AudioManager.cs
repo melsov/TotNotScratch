@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine.Assertions;
 using System;
+using UnityEngine.SceneManagement;
 
 public class AudioManager : PhoenixLikeSingleton<AudioManager> {
 
@@ -34,9 +35,29 @@ public class AudioManager : PhoenixLikeSingleton<AudioManager> {
     public static string Dink = "Dink";
 
     public void Awake() {
+        setupAudios();
+    }
+
+    protected override void onSceneLoaded(Scene scene, LoadSceneMode loadSceneMode) {
+        setupAudios();
+    }
+
+    private void setupAudios() {
+        bool needSetup = audios.Count == 0;
+        foreach(string k in audios.Keys) {
+            if(!audios[k]) {
+                needSetup = true;
+                break;
+            }
+        }
+
+        if(!needSetup) { return; }
+        audios.Clear();
+
         foreach(AudioSource au in GetComponentsInChildren<AudioSource>()) {
             audios.Add(au.gameObject.name, au);
         }
+        
     }
 
     public void playDink() { play(Dink); }

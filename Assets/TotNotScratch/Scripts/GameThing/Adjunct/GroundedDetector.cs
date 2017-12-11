@@ -34,7 +34,7 @@ public class GroundedDetector : MonoBehaviour
 
     private void Awake() {
         contactPoints = new ContactPoint2D[20];
-        colldr = GetComponent<Collider2D>();
+        colldr = GetComponentInParent<GameThing>().findFeet(); // GetComponent<Collider2D>();
         filter.layerMask = LayerMask.GetMask("GameThingPhysics", "GameThingTerrain");
     }
 
