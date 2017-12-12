@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEditor;
+
 using System;
 using System.IO;
 using UnityEngine.SceneManagement;
@@ -16,6 +16,8 @@ using UnityEngine.SceneManagement;
 seek slowly slow turns * or just lookAt with lerp if not already exists
  *  */
 
+#if UNITY_EDITOR
+using UnityEditor;
 [CustomEditor(typeof(GameThing), true)]
 public class GameThingDataEditor : Editor
 {
@@ -63,6 +65,7 @@ public class GameThingDataEditor : Editor
     }
 
 }
+#endif
 
 public class GameThing : MonoBehaviour {
 

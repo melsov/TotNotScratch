@@ -1,11 +1,11 @@
 ﻿using UnityEngine;
-using UnityEditor;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-
+#if UNITY_EDITOR
+using UnityEditor;
 [CustomEditor(typeof(GTAnimator), false)]
 public class GTAnimatorDataEditor : Editor
 {
@@ -25,6 +25,7 @@ public class GTAnimatorDataEditor : Editor
         base.OnInspectorGUI();
     }
 }
+#endif
 
 public class GTAnimator : MonoBehaviour
 {

@@ -4,16 +4,16 @@
 	{
 		_MainTex ("Texture", 2D) = "white" {}
 		_Radius ("_Radius", Range(0,1.0)) = 0.5 
-		_Scale ("_Scale", Vector) = (1,1,1,1)
+		[HideInInspector] _Scale ("_Scale", Vector) = (1,1,1,1)
 	}
 	SubShader
 	{
-		Tags { 	"Queue"="Transparent"				
+		Tags { 	
+			"Queue"="Transparent"				
 			"RenderType"="Transparent" 
 		}
 		LOD 100
 
-		//ZWrite Off
 		Blend SrcAlpha OneMinusSrcAlpha
 
 		Pass
@@ -22,10 +22,7 @@
 
 			#pragma vertex vert
 			#pragma fragment frag
-			// make fog work
-			// #pragma multi_compile_fog
 
-			#define ROOT2 1.41421356237
 			#define ROOT_PT5 0.70710678118
 			
 			#include "UnityCG.cginc"
@@ -39,7 +36,7 @@
 			struct v2f
 			{
 				float2 uv : TEXCOORD0;
-				// float3 worldPos : TEXCOORD1;
+				float2 oUV : TEXCOORD1;
 				float4 vertex : SV_POSITION;
 			};
 
@@ -48,14 +45,13 @@
 
 			fixed _Radius;
 			fixed4 _Scale;
-
 			
 			
 			v2f vert (appdata v)
 			{
 				v2f o;
-				// o.worldPos = mul (unity_ObjectToWorld, v.vertex).xyz;
 				o.vertex = UnityObjectToClipPos(v.vertex);
+				o.oUV = v.uv;
 				o.uv = TRANSFORM_TEX(v.uv, _MainTex);
 				return o;
 			}
@@ -64,8 +60,7 @@
 				uv = uv * _Scale.xy;
 				fixed2 d = min(uv, _Scale.xy - uv);
 			 	fixed2 t = saturate(d > _Radius * ROOT_PT5);
-				fixed c =  dot(t,t) + (length( _Radius*ROOT_PT5 - d) <  _Radius*ROOT_PT5);
-				return fixed4(col.rgb, c);
+				return fixed4(col.rgb, dot(t,t) + (length( _Radius*ROOT_PT5 - d) <  _Radius*ROOT_PT5));
 			}
 
 			fixed2 scaleUV(fixed2 uv) {
@@ -76,7 +71,7 @@
 			{
 				fixed2 uv = scaleUV(i.uv);
 				fixed4 col = tex2D(_MainTex, uv );
-				col = roundCorners(col, i.uv);
+				col = roundCorners(col, i.oUV);
 				return col;
 			}
 			ENDCG
