@@ -31,6 +31,7 @@
 #ignore scenes (don't let updates overwrite students' scenes)
 *.unity
 !*BlankSceneCOPY-DONT-USE-ORIGINAL.unity
+!*TerrainScene.unity
 
 #even if in sub-directories
 !*/

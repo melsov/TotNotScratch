@@ -71,7 +71,7 @@ public class GameThing : MonoBehaviour {
 
     [SerializeField]
     protected bool dragable;
-    private VectorXY mouDownRelativePos;
+    protected VectorXY mouDownRelativePos;
 
     [SerializeField, Header("Which keys move this game thing?")]
     private DirectionKeySet directionKeySet;
@@ -178,14 +178,29 @@ public class GameThing : MonoBehaviour {
     private bool alreadyTalking;
 
     [SerializeField]
-    private bool wantDBugMessages = true;
-    private int lastHorizontalMove;
+    protected bool wantDBugMessages = true;
+    protected int lastHorizontalMove;
     [SerializeField]
-    private float jumpSpeedScaler = .4f;
-    private Vector2 lastGroundNormal;
-    private float wallBoost;
+    protected float jumpSpeedScaler = .4f;
+    protected Vector2 lastGroundNormal;
+    protected float wallBoost;
     [SerializeField, Header("Inclines slow down platformers. setting this >1 will speed them up")]
-    private float inclineScaler;
+    protected float inclineScaler;
+
+    [SerializeField]
+    protected bool canMoveHorizontalInMidAir;
+
+    protected bool allowedToJump = true;
+
+    [SerializeField, Header("Platformer: slow down when no direction keys are down"), Range(0f, 1f)]
+    protected float noHorizontalKeyDownBrakes = 0f;
+    [SerializeField, Header("this * speed = max speed: does nothing if less than 1")]
+    protected float speedLimitMultiplier;
+
+    [SerializeField]
+    protected bool flipSpriteWithHorizontalDirKeys = true;
+    [SerializeField]
+    protected bool spriteFacesRight = true;
 
     private void Awake() {
         if (useDirectionKeys) {
@@ -383,6 +398,15 @@ public class GameThing : MonoBehaviour {
             mv.horiztonal = 1;
         }
         movePlatformer(mv);
+        if(flipSpriteWithHorizontalDirKeys) {
+            flipSpriteWithHorizontal(mv);
+        }
+    }
+
+    protected void flipSpriteWithHorizontal(DirectionInput mv) {
+        if(mv.horiztonal != 0) {
+            srendrr.flipX = spriteFacesRight == mv.horiztonal > 0;
+        }
     }
 
     protected virtual void keyDown(KeyCode kc) {
@@ -609,19 +633,55 @@ public class GameThing : MonoBehaviour {
 
     protected virtual void movePlatformer(DirectionInput mv) {
         GroundedInfo _groundedInfo = isGrounded;
-        if (_groundedInfo) {
+
+        if (canMoveHorizontalInMidAir || _groundedInfo) {
             lastHorizontalMove = mv.horiztonal;
-            lastGroundNormal = _groundedInfo.groundNormal;
-            wallBoost = Mathf.Abs(Vector2.Dot(lastGroundNormal, Vector2.right));
-            //wallBoost = wallBoost > .7f ? wallBoost : 0f;
+            if (_groundedInfo) {
+                lastGroundNormal = _groundedInfo.groundNormal;
+                wallBoost = Mathf.Abs(Vector2.Dot(lastGroundNormal, Vector2.right));
+            }
         }
-        boost((Vector2.up * (_groundedInfo ? 1f : 0f) * mv.vertical * platformerJumpForce + 
-            Vector2.right * (_groundedInfo ? 1f + (inclineScaler * Mathf.Min( wallBoost, .6f)) : jumpSpeedScaler * (1 + wallBoost)) * lastHorizontalMove * -1f * speed )
-            * rb.mass);
+        bool willJump = false;
+        if(allowedToJump) {
+            willJump = _groundedInfo && mv.vertical == 1;
+            if (willJump) {
+                allowedToJump = false;
+                StartCoroutine(reenableAllowedToJump());
+            }
+            
+        } 
+        Vector2 _boost = (Vector2.up * (willJump ? 1f : 0f) * mv.vertical * platformerJumpForce +
+            Vector2.right * (_groundedInfo ? 1f + (inclineScaler * Mathf.Min(wallBoost, .6f)) : jumpSpeedScaler * (1 + wallBoost)) * lastHorizontalMove * -1f * speed)
+            * rb.mass;
+
+
+        boost(_boost);
+        applyNoHorizontalKeyBrakes(mv, _groundedInfo);
+        if(speedLimitMultiplier > 1f) {
+            rb.velocity = Vector2.Min(rb.velocity, new Vector2(speed * speedLimitMultiplier, speed * speedLimitMultiplier));
+        }
     }
 
-    private void boost(object p) {
-        throw new NotImplementedException();
+    private IEnumerator reenableAllowedToJump() {
+        int safety = 0;
+        GroundedInfo gi = isGrounded;
+        if (gi) {
+            while (safety++ < 1000) {
+                yield return new WaitForFixedUpdate();
+                if(!isGrounded) {
+                    break;
+                }
+            }
+        }
+
+        yield return new WaitForFixedUpdate(); //wait at least one fixed update
+        allowedToJump = true;
+    }
+
+    private void applyNoHorizontalKeyBrakes(DirectionInput mv, GroundedInfo _groundedInfo) {
+        if(mv.horiztonal != 0 || !_groundedInfo) { return; }
+
+        rb.velocity += Vector2.right * rb.velocity.x * -1f * noHorizontalKeyDownBrakes * noHorizontalKeyDownBrakes;
     }
 
     protected virtual void moveTo(Vector3 global) {
@@ -656,13 +716,13 @@ public class GameThing : MonoBehaviour {
     }
 
     private void Update() {
-        checkKeys();
         update();
     }
 
     protected virtual void update() { }
 
     private void FixedUpdate() {
+        checkKeys();
         fixedUpdate();
     }
 
