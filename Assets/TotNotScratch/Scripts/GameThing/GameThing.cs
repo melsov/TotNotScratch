@@ -24,11 +24,11 @@ public class GameThingDataEditor : Editor
 	public override void OnInspectorGUI() {
 		GameThing gt = (GameThing)target;
 
-		header(gt);
+		//header(gt);
 
 		GUI.backgroundColor = new Color(.8f, 1f, .1f);
+
 		base.OnInspectorGUI();
-		EditorGUILayout.EndVertical();
 	}
 
 	private void header(GameThing gt) {
@@ -44,11 +44,11 @@ public class GameThingDataEditor : Editor
 		} 
 		headerStyle.fixedHeight = 44f;
 		headerStyle.fixedWidth = headerStyle.fixedHeight;
-		EditorGUILayout.BeginVertical(headerStyle);
-		EditorGUILayout.BeginHorizontal();
-		EditorGUILayout.EndHorizontal();
-		EditorGUILayout.EndVertical();
-		EditorGUILayout.BeginVertical();
+		//EditorGUILayout.BeginVertical(headerStyle);
+		//EditorGUILayout.BeginHorizontal();
+		//EditorGUILayout.EndHorizontal();
+		//EditorGUILayout.EndVertical();
+
 	}
 
 	public static Texture2D LoadPNG(string filePath) {
@@ -81,7 +81,8 @@ public class GameThing : MonoBehaviour {
 	private DirectionKeyMovementType directionKeyMovementType;
 	[SerializeField, Header("Platformer jump force (value will be multiplied by rb mass)")]
 	protected float platformerJumpForce = 100f;
-
+    [SerializeField]
+    private float jumpDamping = .1f;
 
 	private DirectionInput mv;
 
@@ -206,8 +207,9 @@ public class GameThing : MonoBehaviour {
 	protected bool flipSpriteWithHorizontalDirKeys = true;
 	[SerializeField]
 	protected bool spriteFacesRight = true;
+ 
 
-	private void Awake() {
+    private void Awake() {
 		if (useDirectionKeys) {
 			directionKeys = new DirectionKeys(directionKeySet == DirectionKeySet.WASD);
 		}
@@ -651,14 +653,11 @@ public class GameThing : MonoBehaviour {
 			willJump = _groundedInfo && mv.vertical == 1;
 			if (willJump) {
 
-				rb.velocity = Vector2.zero;
-				Vector3 jumpTarget = Vector2.up * platformerJumpForce + Vector2.right * -1f * platformerJumpForce * horizJumpMulti * mv.horiztonal;
-				Vector2 _forceOfJump = forceToReach (rb, (Vector3) rb.position, (Vector3)(rb.transform.position + jumpTarget));
-				boost (_forceOfJump, ForceMode2D.Impulse);
+                
 
 				allowedToJump = false;
 				isMidJump = true;
-				StartCoroutine(reenableAllowedToJump());
+				StartCoroutine(platformerJump());
 
 			}
 
@@ -678,27 +677,48 @@ public class GameThing : MonoBehaviour {
 		}
 	}
 
-	public static Vector2 forceToReach(Rigidbody2D boulderRB, Vector3 start, Vector3 end) {
+	public static Vector2 forceToReach(Rigidbody2D RB, Vector2 start, Vector2 end) {
 		Vector2 dif = end - start;
-		if (boulderRB.gravityScale == 0f) { boulderRB.gravityScale = 1f; }
-		float y0 = Mathf.Sqrt(dif.y * -2 * Physics2D.gravity.y * boulderRB.gravityScale);
-		float x0 = (-Physics2D.gravity.y * boulderRB.gravityScale / y0) * dif.x;
+		if (RB.gravityScale == 0f) { RB.gravityScale = 1f; }
+		float y0 = Mathf.Sqrt(dif.y * -2 * Physics2D.gravity.y * RB.gravityScale);
+		float x0 = (-Physics2D.gravity.y * RB.gravityScale / y0) * dif.x;
+        if(float.IsNaN(y0) || float.IsNaN(x0)) { return Vector2.zero; }
 		return new Vector2(x0, y0);
 	}
 
-	private IEnumerator reenableAllowedToJump() {
-		int safety = 0;
-		GroundedInfo gi = isGrounded;
-		if (gi) {
-			while (safety++ < 1000) {
-				yield return new WaitForFixedUpdate();
-				if(!isGrounded) {
-					break;
-				}
-			}
-		}
+	protected virtual IEnumerator platformerJump() {
 
-		yield return new WaitForFixedUpdate(); //wait at least one fixed update
+        Vector2 startPos = rb.position;
+        Vector3 jumpForce = Vector2.up * platformerJumpForce; 
+
+        boost (jumpForce, ForceMode2D.Impulse);
+        yield return new WaitForFixedUpdate();
+        boost(jumpForce * .4f, ForceMode2D.Impulse);
+        yield return new WaitForFixedUpdate();
+        boost(jumpForce * .2f, ForceMode2D.Impulse);
+        yield return new WaitForFixedUpdate();
+
+
+        //damping
+        float relHeight;
+        while (rb.velocity.y > 0f) {
+            relHeight = rb.position.y - startPos.y;
+            boost(Vector2.up * Mathf.Abs(relHeight * relHeight * jumpDamping) * -1f, ForceMode2D.Impulse);
+            yield return new WaitForFixedUpdate();
+        }
+        Vector2 maxPos = rb.position;
+        while (!isGrounded) {
+            relHeight = rb.position.y - startPos.y;
+            boost(Vector2.up * Mathf.Abs(relHeight * relHeight * jumpDamping) * -1f, ForceMode2D.Impulse);
+            yield return new WaitForFixedUpdate();
+
+            if(relHeight /Mathf.Abs (maxPos.y - startPos.y) < .2f) {
+                break;
+            }
+        }
+
+
+        yield return new WaitForFixedUpdate(); //wait at least one fixed update
 		allowedToJump = true;
 		isMidJump = false;
 	}
