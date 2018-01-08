@@ -175,6 +175,7 @@ public class GameThing : MonoBehaviour {
 
 	[SerializeField, Header("Ignore terrain collisions while moving upwards")]
 	protected bool ignoreTerrainWhileMovingUp;
+    [SerializeField]
 	protected Collider2D feet;
 
 	protected GroundedDetector groundedDetector;
@@ -196,17 +197,17 @@ public class GameThing : MonoBehaviour {
 
 	protected bool allowedToJump = true;
 
-	protected bool isMidJump = false;
-
 	[SerializeField, Header("Platformer: slow down when no direction keys are down"), Range(0f, 1f)]
 	protected float noHorizontalKeyDownBrakes = 0f;
-	[SerializeField, Header("this * speed = max speed: does nothing if less than 1")]
-	protected float speedLimitMultiplier;
+	[SerializeField, Header(" max speed: does nothing if less than .1")]
+	protected float speedLimit;
 
 	[SerializeField]
 	protected bool flipSpriteWithHorizontalDirKeys = true;
 	[SerializeField]
 	protected bool spriteFacesRight = true;
+    [SerializeField]
+    protected Vector2 preJumpVelocity;
  
 
     private void Awake() {
@@ -230,22 +231,12 @@ public class GameThing : MonoBehaviour {
 
 		StartCoroutine(waitThenCallLateStart());
 		if(ignoreTerrainWhileMovingUp) {
-			feet = findFeet();
-			StartCoroutine(ignoreTerrainWhileUp());
+			StartCoroutine(ignoreTerrainWhileGoingUp());
 
 		}
 		start();
 	}
 
-	public Collider2D findFeet() {
-		foreach(Collider2D coll in GetComponentsInChildren<Collider2D>()) {
-			if (coll.gameObject == gameObject) { continue; }
-			if (coll.name.ToLower().Equals("feet")) {
-				return coll;
-			}
-		}
-		return colldr;
-	}
 
 
 	protected virtual void start() { }
@@ -289,13 +280,13 @@ public class GameThing : MonoBehaviour {
 		}
 	}
 
-	private IEnumerator ignoreTerrainWhileUp() {
+	private IEnumerator ignoreTerrainWhileGoingUp() {
 		int layer = feet.gameObject.layer;
 
 		while(true) {
 			if(ignoreTerrainWhileMovingUp) {
-				if( (LayerMask.NameToLayer("IgnoreTerrain") == feet.gameObject.layer) != rb.velocity.y > .05f) {
-					feet.gameObject.layer = rb.velocity.y > .05f ? LayerMask.NameToLayer("IgnoreTerrain") : layer;
+                if ((LayerMask.NameToLayer("IgnoreTerrain") == feet.gameObject.layer) != rb.velocity.y > .05f) {
+                    feet.gameObject.layer = rb.velocity.y > .05f ? LayerMask.NameToLayer("IgnoreTerrain") : layer;
 				}
 			}
 			yield return new WaitForFixedUpdate();
@@ -356,15 +347,15 @@ public class GameThing : MonoBehaviour {
 		if(ignoreKeyInput) { return; }
 		if(useDirectionKeys) {
 			switch(directionKeyMovementType) {
-			case DirectionKeyMovementType.PLATFORMER:
-				checkPlatformerKeys();
-				break;
-			case DirectionKeyMovementType.NORTH_SOUTH_EAST_WEST:
-				checkNSEWKeys();
-				break;
-			case DirectionKeyMovementType.NOT_USING_DIRECTION_KEYS:
-			default:
-				break;
+                case DirectionKeyMovementType.PLATFORMER:
+                    checkPlatformerKeys();
+                    break;
+                case DirectionKeyMovementType.NORTH_SOUTH_EAST_WEST:
+                    checkNSEWKeys();
+                    break;
+                case DirectionKeyMovementType.NOT_USING_DIRECTION_KEYS:
+                default:
+                    break;
 			}
 		}
 
@@ -376,24 +367,42 @@ public class GameThing : MonoBehaviour {
 		}
 	}
 
+    private void moves() {
+        if (ignoreKeyInput) { return; }
+		if(useDirectionKeys) {
+			switch(directionKeyMovementType) {
+                case DirectionKeyMovementType.PLATFORMER:
+                    movePlatformer(mv);
+                    break;
+                case DirectionKeyMovementType.NORTH_SOUTH_EAST_WEST:
+                    moveInDirection(nsewMove);
+                    break;
+                case DirectionKeyMovementType.NOT_USING_DIRECTION_KEYS:
+                default:
+                    break;
+			}
+		}
+        resetKeys();
+	}
+
 	private void checkNSEWKeys() {
-		Vector3 mv = Vector3.zero;
-		if (Input.GetKey(directionKeys.up)) {
-			mv.y = 1;
+        nsewMove = Vector3.zero;
+        if (Input.GetKey(directionKeys.up)) {
+			nsewMove.y = 1;
 		} else if (Input.GetKey(directionKeys.down)) {
-			mv.y = -1;
+			nsewMove.y = -1;
 		}
 		if (Input.GetKey(directionKeys.right)) {
-			mv += Vector3.right;
+			nsewMove += Vector3.right;
 		} else if (Input.GetKey(directionKeys.left)) {
-			mv += Vector3.left;
+			nsewMove += Vector3.left;
 		}
 
-		moveInDirection(mv.normalized);
+		//moveInDirection(nsewMove.normalized);
 	}
 
 	private void checkPlatformerKeys() {
-		mv = new DirectionInput();
+		//mv = new DirectionInput();
 		if (Input.GetKeyDown(directionKeys.up)) {
 			mv.vertical = 1;
 		} else if (Input.GetKey(directionKeys.down)) {
@@ -404,11 +413,16 @@ public class GameThing : MonoBehaviour {
 		} else if (Input.GetKey(directionKeys.left)) {
 			mv.horiztonal = 1;
 		}
-		movePlatformer(mv);
+		//movePlatformer(mv);
 		if(flipSpriteWithHorizontalDirKeys) {
 			flipSpriteWithHorizontal(mv);
 		}
 	}
+
+    private void resetKeys() {
+        mv = new DirectionInput();
+        nsewMove = Vector3.zero;
+    }
 
 	protected void flipSpriteWithHorizontal(DirectionInput mv) {
 		if(mv.horiztonal != 0) {
@@ -638,44 +652,40 @@ public class GameThing : MonoBehaviour {
 		rb.MovePosition(transform.position + dir * speed * Time.deltaTime);
 	}
 
-	protected virtual void movePlatformer(DirectionInput mv) {
+    [SerializeField]
+    private DebugLight dbugLight;
+    private Vector3 nsewMove;
+
+    protected virtual void movePlatformer(DirectionInput mv) {
 		GroundedInfo _groundedInfo = isGrounded;
 
-		if (canMoveHorizontalInMidAir || _groundedInfo) {
-			lastHorizontalMove = mv.horiztonal;
-			if (_groundedInfo) {
-				lastGroundNormal = _groundedInfo.groundNormal;
-				wallBoost = Mathf.Abs(Vector2.Dot(lastGroundNormal, Vector2.right));
-			}
-		}
-		bool willJump = false;
-		if(allowedToJump) {
-			willJump = _groundedInfo && mv.vertical == 1;
-			if (willJump) {
+        lastHorizontalMove = mv.horiztonal;
+        if (_groundedInfo) {
+            lastGroundNormal = _groundedInfo.groundNormal;
+            wallBoost = Mathf.Abs(Vector2.Dot(lastGroundNormal, Vector2.right));
+        }
 
-                
 
+        if (allowedToJump) {
+			if ( _groundedInfo && mv.vertical == 1) {
 				allowedToJump = false;
-				isMidJump = true;
 				StartCoroutine(platformerJump());
-
 			}
-
-		} 
-
-		if (!isMidJump) {
-			Vector2 _boost = (Vector2.up * (willJump ? 1f : 0f) * mv.vertical * platformerJumpForce +
-			                Vector2.right * (_groundedInfo ? 1f + (inclineScaler * Mathf.Min (wallBoost, .6f)) : jumpSpeedScaler * (1 + wallBoost)) * lastHorizontalMove * -1f * speed)
-			                * rb.mass;
-
-			boost (_boost);
-			applyNoHorizontalKeyBrakes(mv, _groundedInfo);
 		}
 
-		if(_groundedInfo && speedLimitMultiplier > 1f) {
-			rb.velocity = Vector2.Min(rb.velocity, new Vector2(speed * speedLimitMultiplier, speed * speedLimitMultiplier));
+        Vector2 _boost = Vector2.right *
+            (_groundedInfo ? 1f + (inclineScaler * Mathf.Min (wallBoost, .6f)) : jumpSpeedScaler * (1 + wallBoost))
+            * lastHorizontalMove * -1f * speed * rb.mass;
+
+        boost(_boost);
+        applyNoHorizontalKeyBrakes(mv, _groundedInfo);
+
+		if(speedLimit > .1f) {
+			rb.velocity = new Vector2(Mathf.Min(Mathf.Abs(rb.velocity.x), speedLimit) * Mathf.Sign(rb.velocity.x), rb.velocity.y);
 		}
 	}
+
+
 
 	public static Vector2 forceToReach(Rigidbody2D RB, Vector2 start, Vector2 end) {
 		Vector2 dif = end - start;
@@ -687,8 +697,9 @@ public class GameThing : MonoBehaviour {
 	}
 
 	protected virtual IEnumerator platformerJump() {
-
         Vector2 startPos = rb.position;
+        Vector2 preJumpVelocity = rb.velocity;
+        DirectionInput preJumpInput = mv;
         Vector3 jumpForce = Vector2.up * platformerJumpForce; 
 
         boost (jumpForce, ForceMode2D.Impulse);
@@ -717,10 +728,12 @@ public class GameThing : MonoBehaviour {
             }
         }
 
+        if (preJumpInput.horiztonal != 0 && preJumpInput.horiztonal == mv.horiztonal) {
 
-        yield return new WaitForFixedUpdate(); //wait at least one fixed update
-		allowedToJump = true;
-		isMidJump = false;
+            rb.velocity = new Vector2(preJumpVelocity.x * 1.5f, rb.velocity.y);
+        }
+
+        allowedToJump = true;
 	}
 
 	private void applyNoHorizontalKeyBrakes(DirectionInput mv, GroundedInfo _groundedInfo) {
@@ -738,7 +751,7 @@ public class GameThing : MonoBehaviour {
 	}
 
 	protected virtual void boost(Vector2 force, ForceMode2D mode = ForceMode2D.Force) {
-		rb.AddForce(force, mode);
+		rb.AddForce(force * Time.deltaTime, mode);
 	}
 
 	protected void rotate(float byDegrees) {
@@ -764,16 +777,20 @@ public class GameThing : MonoBehaviour {
 		update();
 	}
 
-	protected virtual void update() { }
+	protected virtual void update() {
+		checkKeys();
+    }
 
 	private void FixedUpdate() {
-		checkKeys();
+        moves();
 		fixedUpdate();
 	}
 
 	protected virtual void fixedUpdate() { }
 
-	protected void dbug(string s) {
+//THEORY: Laszlo become re-grounded too soon: when he hits a platform moving up. ?? but how if vertical velocity still positive?
+
+    protected void dbug(string s) {
 		if(wantDBugMessages) {
 			Debug.Log(s);
 		}

@@ -6,6 +6,14 @@ public struct VectorXY  {
 
     private Vector2 v;
 
+    public static VectorXY zero {
+        get { return new VectorXY(0, 0); }
+    }
+
+    public static VectorXY one {
+        get { return new VectorXY(1, 1); }
+    }
+
     public static VectorXY maxValue = new VectorXY(new Vector3(float.MaxValue, float.MaxValue, float.MaxValue));
     public static Vector3 maxVector3 = new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
     public static VectorXY fakeNull = new VectorXY(float.MaxValue - 14, float.MaxValue - 6); // maxValue;
@@ -27,6 +35,10 @@ public struct VectorXY  {
 
     public Vector3 vector3() {
         return vector3(0);
+    }
+
+    public VectorXY abs() {
+        return new VectorXY(Mathf.Abs(x), Mathf.Abs(y));
     }
 
     public Vector3 vector3(float z) {
@@ -109,6 +121,14 @@ public struct VectorXY  {
         return angleRadians() * Mathf.Rad2Deg;
     }
 
+    public VectorXY clamped(VectorXY min, VectorXY max) {
+        return VectorXY.min(this, VectorXY.max(this, max));
+    }
+
+    public VectorXY clamped01() {
+        return clamped(VectorXY.zero, VectorXY.one);
+    }
+
     public float angleRadians() {
         //swapping components so that the resulting angle "a" satisfies:
         // (cos(a), sin(a)) == this vector normalized
@@ -161,6 +181,10 @@ public struct VectorXY  {
         return new VectorXY(v.x / f, v.y / f);
     }
 
+    public static VectorXY operator / (VectorXY v, VectorXY b) {
+        return new VectorXY(v.x / b.x, v.y / b.y);
+    }
+
     public static bool operator >(VectorXY a, VectorXY b) {
         return a.x > b.x && a.y > b.y;
     }
@@ -169,6 +193,7 @@ public struct VectorXY  {
     }
 
     public static implicit operator VectorXY(Vector3 v) { return new VectorXY(v); }
+    public static implicit operator VectorXY(Vector2 v) { return new VectorXY(v); }
     public static implicit operator bool (VectorXY v) { return !v.isFakeNull(); }
 
     public override bool Equals(object obj) {

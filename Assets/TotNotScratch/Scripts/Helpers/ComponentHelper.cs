@@ -18,6 +18,15 @@ public static class ComponentHelper
         return thing;
     }
 
+    public static T FindAnywhereOrAdd<T>() where T : Component {
+        T thing = GameObject.FindObjectOfType<T>();
+        if(!thing) {
+            GameObject go = new GameObject(typeof(T).ToString());
+            thing = go.AddComponent<T>();
+        }
+        return thing;
+    }
+
     public static T FindInChildrenOrAddChildFromResourcesPrefab<T>(Transform trans, string resourcesRelPath, Vector3 childRelPos = default(Vector3)) where T : Component {
         T thing = trans.GetComponentInChildren<T>();
         if(!thing) {

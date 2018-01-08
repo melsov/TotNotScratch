@@ -20,10 +20,10 @@ public struct GroundedInfo
 
 public class GroundedDetector : MonoBehaviour
 {
+    [SerializeField]
+    private Collider2D triggerColldr;
 
-    private Collider2D colldr;
-
-    private ContactPoint2D[] contactPoints;
+    private Collider2D[] contactPoints;
     private ContactFilter2D filter;
 
     [Space(8)]
@@ -32,14 +32,17 @@ public class GroundedDetector : MonoBehaviour
     [Space(3)]
     private float steepTolerance = .1f;
 
+    [SerializeField]
+    private DebugLight dbugLight;
+
     private void Awake() {
-        contactPoints = new ContactPoint2D[20];
-        colldr = GetComponentInParent<GameThing>().findFeet(); // GetComponent<Collider2D>();
+        contactPoints = new Collider2D[20];
         filter.layerMask = LayerMask.GetMask("GameThingPhysics", "GameThingTerrain");
     }
 
-    public IEnumerable<ContactPoint2D> getContactPoints() {
-        int count = colldr.GetContacts(filter, contactPoints);
+    public IEnumerable<Collider2D> getOverlappingColliders() {
+        Assert.IsTrue(triggerColldr.isTrigger, "Collider2D needs to be a trigger");
+        int count = triggerColldr.OverlapCollider(filter, contactPoints);
         for(int i=0; i< count; ++i) {
             yield return contactPoints[i];
         }
@@ -47,13 +50,14 @@ public class GroundedDetector : MonoBehaviour
 
     public GroundedInfo isGrounded() {
 
-        foreach (ContactPoint2D cp in getContactPoints()) {
-
-            if (Vector2.Dot(Vector2.up, cp.normal) > steepTolerance) {
-                return new GroundedInfo(true, cp.normal);
+        foreach (Collider2D cp in getOverlappingColliders()) {
+            ColliderDistance2D cd = triggerColldr.Distance(cp);
+            if (Vector2.Dot(Vector2.up, cd.normal) > steepTolerance) {
+                dbugLight.setOn(true);
+                return new GroundedInfo(true, cd.normal);
             }
-
         }
+        dbugLight.setOn(false);
         return new GroundedInfo(false, Vector2.zero);
     }
 

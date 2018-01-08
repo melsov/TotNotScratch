@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-public class ViewPortHelper : PhoenixLikeSingleton<ViewPortHelper>
+public class ViewPortHelper : MonoBehaviour
 {
 
     public Vector2 viewPortGlobalSize {
@@ -21,5 +21,18 @@ public class ViewPortHelper : PhoenixLikeSingleton<ViewPortHelper>
 
     public bool containsGlobal(Vector3 global) {
         return viewPortGlobal.Contains(global);
+    }
+
+    public VectorXY normalizedPosition(Vector2 v) {
+        Rect global = viewPortGlobal;
+        VectorXY vv = v - global.min;
+        vv = vv / new VectorXY(global.size);
+        return vv;
+    }
+
+    public VectorXY normalizedCenteredness(VectorXY v) {
+        v = normalizedPosition(v.toVector2);
+        v = ((new VectorXY(.5f, .5f) - v).abs() * 2f).clamped01();
+        return v;
     }
 }
