@@ -38,7 +38,7 @@
 
 *.sln
 *.csproj
-*TileScene.unity
+!*TileScene.unity
 
 
 *.prefs

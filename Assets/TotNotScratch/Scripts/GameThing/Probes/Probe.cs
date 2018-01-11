@@ -46,10 +46,6 @@ public class Probe : MonoBehaviour
 
     public bool isOverlappingTerrain() {
         return triggerColldr.IsTouchingLayers(filter.layerMask);
-        //foreach (Collider2D cp in getOverlappingColliders()) {
-        //    return true;
-        //}
-        //return false;
     }
 
     private void OnTriggerEnter2D(Collider2D collidr) {
