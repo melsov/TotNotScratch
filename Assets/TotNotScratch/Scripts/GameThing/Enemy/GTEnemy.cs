@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class GTEnemy : MonoBehaviour {
@@ -25,12 +26,20 @@ public class GTEnemy : MonoBehaviour {
     Rigidbody2D rb;
     Collider2D colldr;
 
+    [SerializeField]
+    ParticleSystem squishParticles;
+
+    bool alive = true;
+
     private void Awake() {
         rb = GetComponent<Rigidbody2D>();
         colldr = GetComponent<Collider2D>();
         anim = GetComponent<Animator>();
         srendrr = GetComponent<SpriteRenderer>();
         setupProbes();
+    }
+
+    private void Start() {
         StartCoroutine(fallToGround());
     }
 
@@ -76,12 +85,35 @@ public class GTEnemy : MonoBehaviour {
         if (Mathf.Abs(move.x) > .01f) {
             srendrr.flipX = (v < 0) != flipSprite;
         }
-        anim.SetBool(walkingAnimatorParameter, Mathf.Abs(move.x) > .01f);
+        if (anim) {
+            anim.SetBool(walkingAnimatorParameter, Mathf.Abs(move.x) > .01f);
+        }
     }
 
     protected void handleHeadProbeEvent(ProbeEventInfo probeEventInfo) {
-        
+        if(probeEventInfo.isEnterEvent) {
+            if( probeEventInfo.colldr.CompareTag("Player")) {
+                TNPlayer player = probeEventInfo.colldr.GetComponent<TNPlayer>();
+                player.getPoints(new GetPointsInfo() { points = 1 });
+
+                squish();
+            }
+        }
     }
 
+    private void squish() {
+        alive = false;
+        squishParticles.Play();
+        StartCoroutine(dieAnimation());
+    }
 
+    private IEnumerator dieAnimation() {
+        foreach(int i in Enumerable.Range(0, 12)) {
+            Vector3 scl = transform.localScale;
+            scl.y *= .5f;
+            transform.localScale = scl;
+            yield return new WaitForFixedUpdate();
+        }
+        Destroy(gameObject);
+    }
 }
