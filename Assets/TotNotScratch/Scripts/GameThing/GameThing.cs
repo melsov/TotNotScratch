@@ -658,7 +658,6 @@ public class GameThing : MonoBehaviour {
 
     protected virtual void movePlatformer(DirectionInput mv) {
 		GroundedInfo _groundedInfo = isGrounded;
-
         lastHorizontalMove = mv.horiztonal;
         if (_groundedInfo) {
             lastGroundNormal = _groundedInfo.groundNormal;

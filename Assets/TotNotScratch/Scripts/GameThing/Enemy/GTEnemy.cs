@@ -28,10 +28,15 @@ public class GTEnemy : MonoBehaviour {
 
     [SerializeField]
     ParticleSystem squishParticles;
+    [SerializeField]
+    string squishSoundName = "small-laser";
+    AudioManager audioManager;
+
 
     bool alive = true;
 
     private void Awake() {
+        audioManager = ComponentHelper.FindAnywhereOrAdd<AudioManager>();
         rb = GetComponent<Rigidbody2D>();
         colldr = GetComponent<Collider2D>();
         anim = GetComponent<Animator>();
@@ -103,6 +108,7 @@ public class GTEnemy : MonoBehaviour {
 
     private void squish() {
         alive = false;
+        audioManager.play(squishSoundName);
         squishParticles.Play();
         StartCoroutine(dieAnimation());
     }
