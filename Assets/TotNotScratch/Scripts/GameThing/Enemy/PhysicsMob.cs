@@ -36,7 +36,6 @@ public class PhysicsMob : PhysicsObject
 
 	protected override void Start()
 	{
-		Time.timeScale = .3f; //****DBUG
 		base.Start();
 		terrainContactFilter.useTriggers = false;
 		terrainContactFilter.SetLayerMask(LayerMask.GetMask("GameThingTerrain"));

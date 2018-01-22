@@ -60,7 +60,7 @@ public class GTCameraFollow : MonoBehaviour
 
     private void centerXLazyY() {
         float xx = Mathf.Lerp(transform.position.x, target.position.x, 4f * smoothing * Time.deltaTime) + offset.x;
-        VectorXY edgeCatchup = viewportHelper.normalizedCenteredness(target.position);
+        VectorXY edgeCatchup = viewportHelper.normalizedCenteredness01(target.position);
 
         float yy = Mathf.Lerp(transform.position.y, target.position.y, 4f * smoothing * edgeCatchup.y * edgeCatchup.y * catchupWhenNearEdgeSpeed / yLaziness * Time.deltaTime) + offset.y;
         transform.position = new Vector3(xx, yy, transform.position.z);

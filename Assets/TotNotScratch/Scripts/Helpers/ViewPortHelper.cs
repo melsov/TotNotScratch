@@ -30,9 +30,13 @@ public class ViewPortHelper : MonoBehaviour
         return vv;
     }
 
-    public VectorXY normalizedCenteredness(VectorXY v) {
-        v = normalizedPosition(v.toVector2);
-        v = ((new VectorXY(.5f, .5f) - v).abs() * 2f).clamped01();
-        return v;
+	public VectorXY unclampedNormalizedCenteredness(VectorXY v)
+	{
+		v = normalizedPosition(v.toVector2);
+		return (new VectorXY(.5f, .5f) - v).abs() * 2f;
+	}
+
+    public VectorXY normalizedCenteredness01(VectorXY v) {
+        return unclampedNormalizedCenteredness(v).clamped01();
     }
 }

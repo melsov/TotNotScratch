@@ -32,6 +32,7 @@ public class PlayerPlatformerController : PhysicsObject {
 	private ContactFilter2D groundPointContactFilter;
 
 	public Vector2 groundPoint { get; private set; }
+	public Rigidbody2D rigidBodyy { get { return rb; } }
 
     // Use this for initialization
     void Awake() {
@@ -74,7 +75,7 @@ public class PlayerPlatformerController : PhysicsObject {
 	private void setGroundPoint()
 	{
 		hitList.Clear();
-		int count = Physics2D.Raycast(rb.position, Vector2.down, groundPointContactFilter, gpHitBuffer, 10f);
+		int count = Physics2D.Raycast(rb.position, Vector2.down, groundPointContactFilter, gpHitBuffer, 30f);
 		for (int i =0; i<count; ++i)
 		{
 			hitList.Add(gpHitBuffer[i]);
@@ -133,4 +134,9 @@ public class PlayerPlatformerController : PhysicsObject {
     public void getPoints(GetPointsInfo info) {
         stats.points._value += info.points;
     }
+
+	private void OnDrawGizmos()
+	{
+		Gizmos.DrawWireCube(groundPoint, Vector3.one * .5f);
+	}
 }
