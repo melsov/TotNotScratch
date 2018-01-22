@@ -32,12 +32,15 @@ public class GTEnemy : MonoBehaviour {
     string squishSoundName = "small-laser";
     AudioManager audioManager;
 
+    protected ContactPoint2D[] contactPoints = new ContactPoint2D[12];
+
 
     bool alive = true;
+    private RaycastHit2D[] hitBuffer = new RaycastHit2D[12];
 
     private void Awake() {
-        audioManager = ComponentHelper.FindAnywhereOrAdd<AudioManager>();
         rb = GetComponent<Rigidbody2D>();
+        audioManager = ComponentHelper.FindAnywhereOrAdd<AudioManager>();
         colldr = GetComponent<Collider2D>();
         anim = GetComponent<Animator>();
         srendrr = GetComponent<SpriteRenderer>();
@@ -46,6 +49,10 @@ public class GTEnemy : MonoBehaviour {
 
     private void Start() {
         StartCoroutine(fallToGround());
+    }
+
+    protected bool isGrounded() {
+        return false;
     }
 
     private IEnumerator fallToGround() {
@@ -65,23 +72,33 @@ public class GTEnemy : MonoBehaviour {
     }
 
 
-    private void setupProbes() {
+    protected virtual void setupProbes() {
         probeSet.left.addTriggerEventListener(handleLeftRightProbeEvent);
         probeSet.right.addTriggerEventListener(handleLeftRightProbeEvent);
         probeSet.feetLeft.addTriggerEventListener(handleFootProbeEvent);
         probeSet.feetRight.addTriggerEventListener(handleFootProbeEvent);
         probeSet.head.addTriggerEventListener(handleHeadProbeEvent);
+        probeSet.body.addTriggerEventListener(handleBodyProbeEvent);
     }
 
-    protected void handleFootProbeEvent(ProbeEventInfo probeEventInfo) {
+    protected virtual void handleFootProbeEvent(ProbeEventInfo probeEventInfo) {
         if(!probeEventInfo.isEnterEvent && !probeEventInfo.probe.isOverlappingTerrain()) {
             setHorizontalDirection(move.x * -1f);
         }
     }
 
-    protected void handleLeftRightProbeEvent(ProbeEventInfo probeEventInfo) {
+    protected virtual void handleLeftRightProbeEvent(ProbeEventInfo probeEventInfo) {
         if (probeEventInfo.isEnterEvent && probeEventInfo.probe.isOverlappingTerrain()) {
             setHorizontalDirection(move.x * -1f);
+        }
+    }
+
+    protected virtual void handleBodyProbeEvent(ProbeEventInfo probeEventInfo) {
+        if (alive && probeEventInfo.isEnterEvent && probeEventInfo.colldr.CompareTag("Player")) {
+            PlayerPlatformerController player = probeEventInfo.colldr.GetComponent<PlayerPlatformerController>();
+            if (player) {
+                player.takeDamage(new DamageInfo() { damage = 1f });
+            }
         }
     }
 
@@ -95,15 +112,19 @@ public class GTEnemy : MonoBehaviour {
         }
     }
 
-    protected void handleHeadProbeEvent(ProbeEventInfo probeEventInfo) {
-        if(probeEventInfo.isEnterEvent) {
-            if( probeEventInfo.colldr.CompareTag("Player")) {
-                TNPlayer player = probeEventInfo.colldr.GetComponent<TNPlayer>();
-                player.getPoints(new GetPointsInfo() { points = 1 });
-
+    protected virtual void handleHeadProbeEvent(ProbeEventInfo probeEventInfo) {
+        if (probeEventInfo.isEnterEvent && probeEventInfo.colldr.CompareTag("Player")) {
+            Vector3 towardsFeet = probeEventInfo.colldr.bounds.extents * .8f; //extents = half bounds size
+            Vector3 dif = probeEventInfo.colldr.bounds.center - towardsFeet - probeSet.head.colldr.bounds.center;
+            if(dif.y > 0) {
+                probeEventInfo.colldr.GetComponent<PlayerPlatformerController>().getPoints(new GetPointsInfo() { points = 1 });
                 squish();
             }
         }
+    }
+
+    //handle non trigger collisions with our main body collider (not probes)
+    private void OnCollisionEnter2D(Collision2D collision) {
     }
 
     private void squish() {

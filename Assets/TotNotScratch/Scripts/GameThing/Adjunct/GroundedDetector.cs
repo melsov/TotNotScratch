@@ -4,7 +4,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using UnityEngine.Assertions;
+#if UNITY_EDITOR
 using UnityEditor;
+#endif
 
 public struct GroundedInfo
 {
@@ -68,7 +70,7 @@ public class GroundedDetector : MonoBehaviour
 
         foreach (Collider2D cp in getOverlappingColliders()) {
             ColliderDistance2D cd = triggerColldr.Distance(cp);
-            //TODO: Laszlo is getting stuck in 2 square wide holes
+            //TODO: Laszlo is getting stuck in 2 square wide holes. 
             print(cd.normal.ToString());
             if (Vector2.Dot(Vector2.up * -1f, cd.normal) > steepTolerance) {
                 dbugLight.setOn(true);

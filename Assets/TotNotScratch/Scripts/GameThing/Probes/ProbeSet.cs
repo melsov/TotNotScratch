@@ -8,7 +8,7 @@ using UnityEngine;
 public class ProbeSet : MonoBehaviour
 {
     [SerializeField]
-    public Probe left, right, feetLeft, feetRight, head;
+    public Probe left, right, feetLeft, feetRight, head, body;
 
     
 }
