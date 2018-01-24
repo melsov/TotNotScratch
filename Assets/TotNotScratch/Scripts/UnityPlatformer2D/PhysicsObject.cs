@@ -38,21 +38,23 @@ public class PhysicsObject : MonoBehaviour {
     protected virtual void ComputeVelocity() {
     }
 
+    public Vector2 alongGround { get { return new Vector2(groundNormal.y, -groundNormal.x); } }
+
+    public Vector2 deltaPosition { get { return velocity * Time.deltaTime; } }
+
     void FixedUpdate() {
         velocity += gravityModifier * Physics2D.gravity * Time.deltaTime;
         velocity.x = targetVelocity.x;
 
         grounded = false;
 
-        Vector2 deltaPosition = velocity * Time.deltaTime;
+        Vector2 _deltaPosition = deltaPosition;
 
-        Vector2 moveAlongGround = new Vector2(groundNormal.y, -groundNormal.x);
-
-        Vector2 move = moveAlongGround * deltaPosition.x;
+        Vector2 move = alongGround * _deltaPosition.x;
 
         Movement(move, false);
 
-        move = Vector2.up * deltaPosition.y;
+        move = Vector2.up * _deltaPosition.y;
 
         Movement(move, true);
     }
@@ -96,4 +98,5 @@ public class PhysicsObject : MonoBehaviour {
 	{
 		rb.position += nudge;
 	}
+
 }

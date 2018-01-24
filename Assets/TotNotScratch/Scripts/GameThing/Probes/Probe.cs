@@ -16,13 +16,15 @@ public class Probe : MonoBehaviour
 {
     public Collider2D colldr { get; protected set; }
     
-    private Collider2D[] contactPoints;
+    private Collider2D[] overlapColliders;
     private ContactFilter2D filter;
 
     private List<Action<ProbeEventInfo>> triggerEvents = new List<Action<ProbeEventInfo>>();
 
+	private ContactFilter2D cf;
+
     private void Awake() {
-        contactPoints = new Collider2D[6];
+        overlapColliders = new Collider2D[6];
         colldr = GetComponent<Collider2D>();
         colldr.isTrigger = true;
         filter.layerMask = LayerMask.GetMask("GameThingTerrain");
@@ -37,11 +39,25 @@ public class Probe : MonoBehaviour
     }
 
     public IEnumerable<Collider2D> getOverlappingColliders() {
-        int count = colldr.OverlapCollider(filter, contactPoints);
+        int count = colldr.OverlapCollider(filter, overlapColliders);
         for(int i=0; i< count; ++i) {
-            yield return contactPoints[i];
+            yield return overlapColliders[i];
         }
     }
+
+	public bool isOverlappingCollider(Collider2D coll)
+	{
+		cf.useTriggers = coll.isTrigger;
+		cf.SetLayerMask(Physics2D.GetLayerCollisionMask(coll.gameObject.layer));
+
+		int count = colldr.OverlapCollider(cf, overlapColliders);
+		for(int i=0; i<count; ++i)
+		{
+
+			if(overlapColliders[i] == coll) { return true; }
+		}
+		return false;
+	}
   
 
     public bool isOverlappingTerrain() {

@@ -20,7 +20,13 @@ public class PhysicsMob : PhysicsObject
 	protected ObstactleInfo obstacleInfo;
 
 	[SerializeField]
+	protected bool avoidFallingOffLedges = true;
+
+	[SerializeField]
 	protected bool debugDrawGizmos = false;
+
+    protected List<RaycastHit2D> mobCastList = new List<RaycastHit2D>();
+    ContactFilter2D mobConFilter = new ContactFilter2D();
 
 	protected override void OnEnable()
 	{
@@ -38,8 +44,11 @@ public class PhysicsMob : PhysicsObject
 	{
 		base.Start();
 		terrainContactFilter.useTriggers = false;
-		terrainContactFilter.SetLayerMask(LayerMask.GetMask("GameThingTerrain"));
+        terrainContactFilter.SetLayerMask(LayerMask.GetMask("GameThingTerrain"));
 		terrainContactFilter.useLayerMask = true;
+
+        mobConFilter.useTriggers = false;
+        mobConFilter.SetLayerMask(LayerMask.GetMask("GameThingPhysics"));
 
 		dir = Vector2.right * (UnityEngine.Random.Range(0f, 1f) > .5 ? 1f : -1f);
 		StartCoroutine(waitUntilGrounded());
@@ -73,22 +82,56 @@ public class PhysicsMob : PhysicsObject
 		}
 		else
 		{
-			Vector2 start = colldr.bounds.center.xy() + Vector2.right * aheadDistance;
-			look = Vector2.down * (colldr.bounds.extents.y + .4f);
-			GetRayObstacles(start, look);
-			if(obstacleInfo.nothingFound)
+			bool shouldTurn = false;
+			if (avoidFallingOffLedges)
+			{
+				Vector2 start = colldr.bounds.center.xy() + Vector2.right * aheadDistance;
+				look = Vector2.down * (colldr.bounds.extents.y + .4f);
+				GetRayObstacles(start, look);
+				shouldTurn = obstacleInfo.nothingFound;
+			}
+			if(shouldTurn)
 			{
 				dir *= -1f;
 			} else
 			{
-				//TODO: use old GetObstacles
+                PhysicsMob other = willHitAMob();
+                if (other) {
+                    dir.x = Mathf.Sign(transform.position.x - other.transform.position.x);
+                }
+				//TODO: use old GetObstacles if needed
 			}
 			
 		}
 		targetVelocity = dir * maxSpeed;
 	}
 
-	protected struct ObstactleInfo
+    PhysicsMob willHitAMob() {
+        CastForMobs(alongGround * deltaPosition.x);
+        PhysicsMob result = null;
+        foreach(RaycastHit2D rh in mobCastList) { //irrelevant: amusing field name 
+            result = rh.collider.GetComponentInParent<PhysicsMob>();
+            if(result) {
+                break;
+            }
+        }
+        return result;
+    }
+
+    void CastForMobs(Vector2 move) {
+        float distance = move.magnitude;
+
+        if (distance > minMoveDistance) {
+            int count = rb.Cast(move, mobConFilter, hitBuffer, distance + shellRadius);
+            mobCastList.Clear();
+            for (int i = 0; i < count; i++) {
+                mobCastList.Add(hitBuffer[i]);
+            }
+        }
+    }
+   
+
+    protected struct ObstactleInfo
 	{
 		public List<RaycastHit2D> hitList;
 		public Vector2 aggregateVelocity;

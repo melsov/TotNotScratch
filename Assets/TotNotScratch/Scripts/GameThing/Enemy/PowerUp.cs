@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 
 
-public class PowerUp : GTEnemy
+public class PowerUp : PhysicsEnemy
 {
 
 	protected override void handleBodyProbeEvent(ProbeEventInfo probeEventInfo)
@@ -25,6 +25,6 @@ public class PowerUp : GTEnemy
 
 	protected override void handleHeadProbeEvent(ProbeEventInfo probeEventInfo)
 	{
-
+		give(probeEventInfo);
 	}
 }
