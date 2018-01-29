@@ -28,7 +28,9 @@ public class QuestionMarkBlock : MonoBehaviour
 
         if (collision.GetComponent<PlayerPlatformerController>())
 		{
-			spawn();
+            if (collision.transform.position.y < transform.position.y) {
+                spawn();
+            }
 		}
 	}
 

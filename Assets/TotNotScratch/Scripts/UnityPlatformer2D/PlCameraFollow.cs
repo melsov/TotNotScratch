@@ -21,6 +21,7 @@ public class PlCameraFollow : MonoBehaviour
 
 	private Vector2 smoothGroundPoint;
 	private RingBuffer<float> lastGroundPointYs;
+    private Abyss abyss;
 
 	private void Awake()
 	{
@@ -30,6 +31,7 @@ public class PlCameraFollow : MonoBehaviour
 
 	private void Start()
 	{
+        abyss = FindObjectOfType<Abyss>();
 		smoothGroundPoint = player.groundPoint;
 	}
 
@@ -37,9 +39,19 @@ public class PlCameraFollow : MonoBehaviour
 	{
 		lerpGroundPoint();
 		centerXLazyY();
+        stayAboveTheAbyss();
 	}
 
-	private void lerpGroundPoint()
+    private void stayAboveTheAbyss() {
+        float dif = abyss.surfaceY - viewportHelper.viewPortGlobal.min.y;
+        if(dif > 0f) {
+            Vector3 pos = transform.position;
+            pos.y += dif;
+            transform.position = pos;
+        }
+    }
+
+    private void lerpGroundPoint()
 	{
 		smoothGroundPoint.x = player.groundPoint.x;
 		lastGroundPointYs.push(player.groundPoint.y);

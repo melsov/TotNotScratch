@@ -15,6 +15,7 @@ public class PhysicsObject : MonoBehaviour {
     protected ContactFilter2D contactFilter;
     protected RaycastHit2D[] hitBuffer = new RaycastHit2D[16];
     protected List<RaycastHit2D> hitBufferList = new List<RaycastHit2D>(16);
+    protected RingBuffer<Vector2> previousPositions = new RingBuffer<Vector2>(16);
 
 
     protected const float minMoveDistance = 0.001f;
@@ -41,6 +42,18 @@ public class PhysicsObject : MonoBehaviour {
     public Vector2 alongGround { get { return new Vector2(groundNormal.y, -groundNormal.x); } }
 
     public Vector2 deltaPosition { get { return velocity * Time.deltaTime; } }
+
+    public Vector2 getRecentVelocity() {
+        Vector2 result = Vector2.zero;
+        for(int i = 1; i < previousPositions.size; ++i) {
+            result += (previousPositions[i] - previousPositions[i - 1]);
+        }
+        return result;
+    }
+
+    public Vector2 getCrudeVelocity() {
+        return previousPositions[previousPositions.size - 2] - previousPositions[0];
+    }
 
     void FixedUpdate() {
         velocity += gravityModifier * Physics2D.gravity * Time.deltaTime;
@@ -96,6 +109,7 @@ public class PhysicsObject : MonoBehaviour {
 
 	protected virtual void nudgeRigidbody(Vector2 nudge)
 	{
+        previousPositions.push(rb.position);
 		rb.position += nudge;
 	}
 

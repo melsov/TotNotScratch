@@ -147,6 +147,7 @@ public class PlayerPlatformerController : PhysicsObject {
 		}
 
         if (Input.GetButtonDown("Jump") && grounded) {
+            StartCoroutine(debugCrudeVelocity());
             velocity.y = jumpTakeOffSpeed;
             audioManager.play(sounds.jump);
         } else if (!Input.GetButton("Jump")) {
@@ -166,7 +167,17 @@ public class PlayerPlatformerController : PhysicsObject {
         targetVelocity = move * maxSpeed;
     }
 
-	protected override void nudgeRigidbody(Vector2 nudge)
+    private IEnumerator debugCrudeVelocity() {
+        for(int i = 0; i < previousPositions.size; ++i) {
+            print(previousPositions[previousPositions.size - 1]);
+            yield return new WaitForFixedUpdate();
+        }
+        Vector2 cvel = getCrudeVelocity();
+        print("crude: " + cvel.ToString());
+        print(getRecentVelocity());
+    }
+
+    protected override void nudgeRigidbody(Vector2 nudge)
 	{
 		if (canControl)
 		{

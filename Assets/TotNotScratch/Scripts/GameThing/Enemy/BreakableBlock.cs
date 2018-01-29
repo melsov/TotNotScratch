@@ -17,10 +17,11 @@ public class BreakableBlock : MonoBehaviour
 
         if (pl) {
             Vector2 dif = transform.position - pl.transform.position;
-            if (true || dif.y > 0f) {
+            if (dif.y > 0f) {
                 particles.Play();
                 ComponentHelper.FindAnywhereOrAdd<AudioManager>().play(breakSound);
                 Destroy(gameObject);
+
             }
         }
     }
