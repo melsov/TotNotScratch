@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using VctorExtensions;
 
 public class PhysicsObject : MonoBehaviour {
 
@@ -11,17 +12,19 @@ public class PhysicsObject : MonoBehaviour {
     protected bool grounded;
     protected Vector2 groundNormal;
     protected Rigidbody2D rb;
-    protected Vector2 velocity;
+    protected Vector2 velocity; 
     protected ContactFilter2D contactFilter;
     protected RaycastHit2D[] hitBuffer = new RaycastHit2D[16];
     protected List<RaycastHit2D> hitBufferList = new List<RaycastHit2D>(16);
-    protected RingBuffer<Vector2> previousPositions = new RingBuffer<Vector2>(16);
 
 
     protected const float minMoveDistance = 0.001f;
     protected const float shellRadius = 0.01f;
 
+    protected Collider2D _colldr;
+
     protected virtual void OnEnable() {
+        _colldr = GetComponent<Collider2D>();
         rb = GetComponent<Rigidbody2D>();
     }
 
@@ -42,18 +45,6 @@ public class PhysicsObject : MonoBehaviour {
     public Vector2 alongGround { get { return new Vector2(groundNormal.y, -groundNormal.x); } }
 
     public Vector2 deltaPosition { get { return velocity * Time.deltaTime; } }
-
-    public Vector2 getRecentVelocity() {
-        Vector2 result = Vector2.zero;
-        for(int i = 1; i < previousPositions.size; ++i) {
-            result += (previousPositions[i] - previousPositions[i - 1]);
-        }
-        return result;
-    }
-
-    public Vector2 getCrudeVelocity() {
-        return previousPositions[previousPositions.size - 2] - previousPositions[0];
-    }
 
     void FixedUpdate() {
         velocity += gravityModifier * Physics2D.gravity * Time.deltaTime;
@@ -99,6 +90,7 @@ public class PhysicsObject : MonoBehaviour {
 
                 float modifiedDistance = hitBufferList[i].distance - shellRadius;
                 distance = modifiedDistance < distance ? modifiedDistance : distance;
+
             }
 
 
@@ -109,8 +101,9 @@ public class PhysicsObject : MonoBehaviour {
 
 	protected virtual void nudgeRigidbody(Vector2 nudge)
 	{
-        previousPositions.push(rb.position);
-		rb.position += nudge;
+        //rb.position += nudge;
+        rb.position = Vector2.Lerp(rb.position, rb.position + nudge, .5f);
 	}
+
 
 }

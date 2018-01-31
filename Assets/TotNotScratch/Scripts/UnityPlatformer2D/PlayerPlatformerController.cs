@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using VctorExtensions;
 
 public class PlayerPlatformerController : PhysicsObject {
 
@@ -34,6 +35,9 @@ public class PlayerPlatformerController : PhysicsObject {
 	[SerializeField]
 	private int startHealth = 1;
 
+    [SerializeField]
+    private bool flipSpriteHorizontally;
+
 	private RaycastHit2D[] gpHitBuffer = new RaycastHit2D[6];
 	private List<RaycastHit2D> hitList = new List<RaycastHit2D>();
 	private ContactFilter2D groundPointContactFilter;
@@ -42,19 +46,33 @@ public class PlayerPlatformerController : PhysicsObject {
 	public Rigidbody2D rigidBodyy { get { return rb; } }
 
 	private bool canControl = true;
+    private bool shouldSquishBounce;
 
-	// Use this for initialization
-	protected override void OnEnable()
+    [SerializeField]
+    private float squishBounceSpeed = 12f;
+
+    private RayCastHitFind downGroundFoundInfo;
+    private RayCastHitFind upGroundFoundInfo;
+
+    private List<RaycastHit2D> lodgeInTerrainPoints = new List<RaycastHit2D>();
+    RayCastHitFind lodgedInfo;
+    Abyss abyss;
+    private bool startedDyingAlready;
+
+    // Use this for initialization
+    protected override void OnEnable()
 	{
 		base.OnEnable();
     }
 
 	private void setup()
 	{
+        startedDyingAlready = false;
         spriteRenderer = GetComponent<SpriteRenderer>();
         animator = GetComponent<Animator>();
         audioManager = ComponentHelper.FindAnywhereOrAdd<AudioManager>();
         stats = ComponentHelper.FindAnywhereOrAdd<Platformer.PlayerStats>();
+        abyss = FindObjectOfType<Abyss>();
 	}
 
 	protected override void Start()
@@ -78,7 +96,7 @@ public class PlayerPlatformerController : PhysicsObject {
 		while(true)
 		{
 			setGroundPoint();
-			yield return new WaitForSeconds(.1f);
+			yield return new WaitForSeconds(.2f);
 		}
 	}
 
@@ -91,8 +109,56 @@ public class PlayerPlatformerController : PhysicsObject {
 
 	private void setGroundPoint()
 	{
+        findGround(Vector2.down, out downGroundFoundInfo);
+        bool gotGround = downGroundFoundInfo.found;
+
+        if(downGroundFoundInfo.found) {
+            groundPoint = downGroundFoundInfo.hit.point;
+
+            //piggyback on groundPoint check: we may have already found a lodged in ground situation?
+            downGroundFoundInfo.lodged = _colldr.bounds.Contains2D(downGroundFoundInfo.hit.point);
+        } else {
+            //check in abyss
+            if (abyss.hasEntered(rb.position)) {
+                die();
+            }
+        }
+        escapeLodgedInTerrain();
+
+        if (!gotGround) {
+            groundPoint = rb.position;
+        }
+	}
+
+    struct RayCastHitFind
+    {
+        public RaycastHit2D hit;
+        public bool found;
+        public bool lodged;
+    }
+
+    //TODO: func that provides a description of which part of player is in terrain
+    private void escapeLodgedInTerrain() {
+        if (downGroundFoundInfo.found && downGroundFoundInfo.lodged) {
+            Vector2 move = Vector2.Scale(downGroundFoundInfo.hit.point - _colldr.bounds.min.xy(), Vector2.up);
+            rb.position += move;
+            return;
+        }
+
+        findGround(Vector2.up, out upGroundFoundInfo, 5f);
+        if(upGroundFoundInfo.found) {
+            upGroundFoundInfo.lodged = _colldr.bounds.Contains2D(upGroundFoundInfo.hit.point);
+            if (upGroundFoundInfo.lodged) {
+                Vector2 move = Vector2.Scale(upGroundFoundInfo.hit.point - _colldr.bounds.max.xy(), Vector2.up);
+                rb.position += move;
+            }
+        }
+    }
+
+    private void findGround(Vector2 lookDirection, out RayCastHitFind found, float dist = 30f) {
 		hitList.Clear();
-		int count = Physics2D.Raycast(rb.position, Vector2.down, groundPointContactFilter, gpHitBuffer, 30f);
+        found = default(RayCastHitFind);
+		int count = Physics2D.Raycast(rb.position, lookDirection, groundPointContactFilter, gpHitBuffer, dist);
 		for (int i = 0; i < count; ++i)
 		{
 			hitList.Add(gpHitBuffer[i]);
@@ -102,12 +168,33 @@ public class PlayerPlatformerController : PhysicsObject {
 			if (hit.collider.CompareTag("Player")) { continue; }
 			if(hit.collider.gameObject.layer == LayerMask.NameToLayer("GameThingTerrain"))
 			{
-				groundPoint = hit.point;
-				return;
+                found.hit = hit;
+                found.found = true;
+                return;
+
 			}
 		}
-		groundPoint = rb.position;
-	}
+        return;
+    }
+
+    private void getOutOfTerrain(RaycastHit2D found) {
+        
+
+    }
+    //private void checkLodgedInTerrain() {
+    //    hitList.Clear();
+    //    lodgeInTerrainPoints.Clear();
+    //    int count = rb.Cast(Vector2.up, contactFilter, gpHitBuffer, 0f);
+    //    for(int i = 0; i < count; ++i) {
+    //        hitList.Add(gpHitBuffer[i]);
+    //    }
+    //    foreach(RaycastHit2D hit in hitList) {
+    //        if(hit.collider.CompareTag("Player")) { continue; }
+    //        if(hit.collider.gameObject.layer == LayerMask.NameToLayer("GameThingTerrain")) {
+    //            lodgeInTerrainPoints.Add(hit);
+    //        }
+    //    }
+    //}
 
 
 	public void takeDamage(DamageInfo damageInfo) {
@@ -122,9 +209,16 @@ public class PlayerPlatformerController : PhysicsObject {
 		}
 
 		if (stats.health._value <= 0) {
-			canControl = false;
-            FindObjectOfType<GameManager>().deathSequence();
+            die();
         }
+    }
+
+    private void die() {
+        if(startedDyingAlready) { return; }
+        startedDyingAlready = true;
+        canControl = false;
+        FindObjectOfType<GameManager>().deathSequence();
+
     }
 
     protected override void ComputeVelocity() {
@@ -146,8 +240,11 @@ public class PlayerPlatformerController : PhysicsObject {
 			}
 		}
 
-        if (Input.GetButtonDown("Jump") && grounded) {
-            StartCoroutine(debugCrudeVelocity());
+        if(shouldSquishBounce) {
+            shouldSquishBounce = false;
+            velocity.y = squishBounceSpeed;
+        }
+        else if (Input.GetButtonDown("Jump") && grounded) {
             velocity.y = jumpTakeOffSpeed;
             audioManager.play(sounds.jump);
         } else if (!Input.GetButton("Jump")) {
@@ -156,25 +253,18 @@ public class PlayerPlatformerController : PhysicsObject {
             }
         }
 
-        bool flipSprite = (spriteRenderer.flipX ? (move.x > 0.01f) : (move.x < 0.01f));
-        if (flipSprite) {
-            spriteRenderer.flipX = !spriteRenderer.flipX;
+        if(Mathf.Abs(Input.GetAxis("Horizontal")) > 0f) {
+            spriteRenderer.flipX = (Input.GetAxis("Horizontal") < 0f) != flipSpriteHorizontally;
         }
+        //bool flipSprite = (spriteRenderer.flipX != flipSpriteHorizontally ? (move.x > 0.01f) : (move.x < 0.01f));
+        //if (flipSprite) {
+        //    spriteRenderer.flipX = !spriteRenderer.flipX;
+        //}
 
         animator.SetBool("grounded", grounded);
         animator.SetFloat("velocityX", Mathf.Abs(velocity.x) / maxSpeed);
 
         targetVelocity = move * maxSpeed;
-    }
-
-    private IEnumerator debugCrudeVelocity() {
-        for(int i = 0; i < previousPositions.size; ++i) {
-            print(previousPositions[previousPositions.size - 1]);
-            yield return new WaitForFixedUpdate();
-        }
-        Vector2 cvel = getCrudeVelocity();
-        print("crude: " + cvel.ToString());
-        print(getRecentVelocity());
     }
 
     protected override void nudgeRigidbody(Vector2 nudge)
@@ -185,13 +275,18 @@ public class PlayerPlatformerController : PhysicsObject {
 		}
 	}
 
+    public void handleSquish(GetPointsInfo info) {
+        shouldSquishBounce = true;
+        stats.points._value += info.points;
+    }
+
 	public void getPoints(GetPointsInfo info) {
         stats.points._value += info.points;
     }
 
 	private void OnDrawGizmos()
 	{
-		Gizmos.color = Color.yellow;
-		Gizmos.DrawWireCube(groundPoint, Vector3.one * .5f);
+		//Gizmos.color = Color.yellow;
+		//Gizmos.DrawWireCube(groundPoint, Vector3.one * .5f);
 	}
 }

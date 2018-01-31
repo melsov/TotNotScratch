@@ -25,6 +25,7 @@ public class PhysicsEnemy : PhysicsMob
 	protected ContactPoint2D[] contactPoints = new ContactPoint2D[12];
 	protected List<ContactPoint2D> contactPointList = new List<ContactPoint2D>();
 
+
 	protected override void Start()
 	{
 		base.Start();
@@ -63,28 +64,34 @@ public class PhysicsEnemy : PhysicsMob
 
 			if(player)
 			{
-				bool shouldDealDamage = !head.colldr.IsTouching(info.colldr); // isOverlappingCollider(info.colldr);
-				if (shouldDealDamage)
-				{
-					ContactPoint2D cp;
-					bool foundPoint = getContactPointWith(info.colldr, out cp);
-					if(foundPoint)
-					{
-						shouldDealDamage = cp.normal.y < 0f && Mathf.Abs( cp.normal.y) > Mathf.Abs( cp.normal.x);
-					}
-				}
-				if (shouldDealDamage)
-				{
-					player.takeDamage(new DamageInfo() { damage = damage });
-				} else
-				{
-					squish(player);
-				}
+                StartCoroutine(waitThenDealDamage(info, player));
 			} 
 		}
 	}
 
-	protected virtual void handleHeadProbeEvent(ProbeEventInfo info)
+    private IEnumerator waitThenDealDamage(ProbeEventInfo info, PlayerPlatformerController player) {
+        yield return new WaitForSeconds(.1f);
+        if (alive) {
+
+            bool shouldDealDamage = !head.colldr.IsTouching(info.colldr); // isOverlappingCollider(info.colldr);
+            if (shouldDealDamage) {
+                ContactPoint2D cp;
+                bool foundPoint = getContactPointWith(info.colldr, out cp);
+                if (foundPoint) {
+                    shouldDealDamage = cp.normal.y < 0f && Mathf.Abs(cp.normal.y) > Mathf.Abs(cp.normal.x);
+                }
+            }
+
+            if (shouldDealDamage) {
+                player.takeDamage(new DamageInfo() { damage = damage });
+            }
+            else {
+                squish(player);
+            }
+        }
+    }
+
+    protected virtual void handleHeadProbeEvent(ProbeEventInfo info)
 	{
 
 		if(info.isEnterEvent)
@@ -100,8 +107,9 @@ public class PhysicsEnemy : PhysicsMob
 
 	private void squish(PlayerPlatformerController player)
 	{
-		player.getPoints(new GetPointsInfo() { points = 1 });
+        if(!alive) { return; }
 		alive = false;
+		player.handleSquish(new GetPointsInfo() { points = 1 });
 		audioManager.play(squishSoundName);
 		squishParticles.Play();
 		StartCoroutine(dieAnimation());

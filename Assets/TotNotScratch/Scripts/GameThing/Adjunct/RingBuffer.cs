@@ -41,6 +41,10 @@ public class RingBuffer<T>
         }
     }
 
+    public int internalIndex(int i) {
+        return (first + i) % size;
+    }
+
     public T this[int i] {
         get {
             return storage[(first + i) % size];

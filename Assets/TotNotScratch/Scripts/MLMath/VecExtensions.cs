@@ -14,10 +14,16 @@ namespace VctorExtensions
 
 		public static Vector2 scale(this Vector2 v, Vector2 other) { return new Vector2(v.x * other.x, v.y * other.y); }
 
+        public static bool grThan(this Vector2 v, Vector2 other) { return v.x > other.x && v.y > other.y; }
+
+        public static bool lessThan(this Vector2 v, Vector2 other) { return v.x < other.x && v.y < other.y; }
+
 		//Vec3 extensions
 		public static Vector2 xy(this Vector3 v) { return new Vector2(v.x, v.y); }
 
-
-
+        //Bounds extensions
+        public static bool Contains2D(this Bounds b, Vector2 v) {
+            return b.min.xy().lessThan(v) && b.max.xy().grThan(v);
+        }
 	}
 }
