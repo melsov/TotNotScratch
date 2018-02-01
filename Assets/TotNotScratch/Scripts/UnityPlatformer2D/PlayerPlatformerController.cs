@@ -51,8 +51,10 @@ public class PlayerPlatformerController : PhysicsObject {
     [SerializeField]
     private float squishBounceSpeed = 12f;
 
-    private RayCastHitFind downGroundFoundInfo;
-    private RayCastHitFind upGroundFoundInfo;
+    //private RayCastHitFind downGroundFoundInfo;
+    //private RayCastHitFind upGroundFoundInfo;
+    private CardinalDirectionRayFind cardinalDirRayFinds;
+    private CardinalColliderBoxes cardinalColliderBoxes;
 
     private List<RaycastHit2D> lodgeInTerrainPoints = new List<RaycastHit2D>();
     RayCastHitFind lodgedInfo;
@@ -73,6 +75,7 @@ public class PlayerPlatformerController : PhysicsObject {
         audioManager = ComponentHelper.FindAnywhereOrAdd<AudioManager>();
         stats = ComponentHelper.FindAnywhereOrAdd<Platformer.PlayerStats>();
         abyss = FindObjectOfType<Abyss>();
+        cardinalColliderBoxes.setup(_colldr.bounds);
 	}
 
 	protected override void Start()
@@ -109,14 +112,14 @@ public class PlayerPlatformerController : PhysicsObject {
 
 	private void setGroundPoint()
 	{
-        findGround(Vector2.down, out downGroundFoundInfo);
-        bool gotGround = downGroundFoundInfo.found;
+        findGround(Vector2.down, out cardinalDirRayFinds.down);// downGroundFoundInfo);
+        bool gotGround = cardinalDirRayFinds.down.found;
 
-        if(downGroundFoundInfo.found) {
-            groundPoint = downGroundFoundInfo.hit.point;
+        if(cardinalDirRayFinds.down.found) {
+            groundPoint = cardinalDirRayFinds.down.hit.point;
 
             //piggyback on groundPoint check: we may have already found a lodged in ground situation?
-            downGroundFoundInfo.lodged = _colldr.bounds.Contains2D(downGroundFoundInfo.hit.point);
+            cardinalDirRayFinds.down.lodged = _colldr.bounds.Contains2D(cardinalDirRayFinds.down.hit.point);
         } else {
             //check in abyss
             if (abyss.hasEntered(rb.position)) {
@@ -130,26 +133,82 @@ public class PlayerPlatformerController : PhysicsObject {
         }
 	}
 
+    struct CardinalColliderBoxes
+    {
+        public Rect up, down, left, right;
+
+        public void setup(Bounds bounds) {
+            float borderWidth = .12f;
+            float sizeScale = 1f - borderWidth * 2f;
+            Vector2 margin = bounds.extents.xy() * borderWidth;
+            up = new Rect(bounds.min.xy() + bounds.extents.xy().scale(Vector2.up) + margin, new Vector2(bounds.size.x, bounds.extents.y) * sizeScale);
+            down = new Rect(bounds.min.xy() + margin, new Vector2(bounds.size.x, bounds.extents.y) * sizeScale);
+            left = new Rect(bounds.min.xy() + margin, new Vector2(bounds.extents.x, bounds.size.y) * sizeScale);
+            right = new Rect(new Vector2(bounds.center.x, bounds.min.y) + margin, new Vector2(bounds.extents.x, bounds.size.y) * sizeScale);
+        }
+    }
+
+    struct CardinalDirectionRayFind
+    {
+        public RayCastHitFind up, down, left, right;
+
+        public RayCastHitFind this[int i] {
+            get {
+                switch (i) {
+                    case 0: return up;
+                    case 1: return down;
+                    case 2: return left;
+                    case 3:
+                    default:
+                        return right;
+                }
+            }
+        }
+
+    }
+
     struct RayCastHitFind
     {
         public RaycastHit2D hit;
         public bool found;
         public bool lodged;
+        public Rect box;
+
+        public bool getLodged(Bounds b) {
+            return b.Contains2D(hit.point);
+        }
     }
 
     //TODO: func that provides a description of which part of player is in terrain
     private void escapeLodgedInTerrain() {
-        if (downGroundFoundInfo.found && downGroundFoundInfo.lodged) {
-            Vector2 move = Vector2.Scale(downGroundFoundInfo.hit.point - _colldr.bounds.min.xy(), Vector2.up);
+        if (cardinalDirRayFinds.down.found && cardinalDirRayFinds.down.lodged) {
+            Vector2 move = Vector2.Scale(cardinalDirRayFinds.down.hit.point - _colldr.bounds.min.xy(), Vector2.up);
             rb.position += move;
             return;
         }
 
-        findGround(Vector2.up, out upGroundFoundInfo, 5f);
-        if(upGroundFoundInfo.found) {
-            upGroundFoundInfo.lodged = _colldr.bounds.Contains2D(upGroundFoundInfo.hit.point);
-            if (upGroundFoundInfo.lodged) {
-                Vector2 move = Vector2.Scale(upGroundFoundInfo.hit.point - _colldr.bounds.max.xy(), Vector2.up);
+        findGroundBox(Vector2.right, cardinalColliderBoxes.right.min, cardinalColliderBoxes.right.size, out cardinalDirRayFinds.right);
+        findGroundBox(Vector2.left, cardinalColliderBoxes.left.min, cardinalColliderBoxes.left.size, out cardinalDirRayFinds.left);
+        if(cardinalDirRayFinds.right.getLodged(_colldr.bounds) && !cardinalDirRayFinds.left.getLodged(_colldr.bounds)) {
+            //move left
+            Vector2 move = (cardinalDirRayFinds.right.hit.point - _colldr.bounds.min.xy()).scale(Vector2.right);
+            rb.position += move;
+            return;
+        } else if (cardinalDirRayFinds.left.getLodged(_colldr.bounds) && !cardinalDirRayFinds.right.getLodged(_colldr.bounds)) {
+            Vector2 move = (cardinalDirRayFinds.left.hit.point - _colldr.bounds.max.xy()).scale(Vector2.right);
+            rb.position += move;
+            return;
+        }
+
+
+        //findGroundBox(Vector2.down, cardinalColliderBoxes.down.min, cardinalColliderBoxes.down.size, out cardinalDirRayFinds.down);
+
+
+        findGround(Vector2.up, out cardinalDirRayFinds.up, 5f);
+        if(cardinalDirRayFinds.up.found) {
+            cardinalDirRayFinds.up.lodged = _colldr.bounds.Contains2D(cardinalDirRayFinds.up.hit.point);
+            if (cardinalDirRayFinds.up.getLodged(_colldr.bounds)) {
+                Vector2 move = Vector2.Scale(cardinalDirRayFinds.up.hit.point - _colldr.bounds.max.xy(), Vector2.up);
                 rb.position += move;
             }
         }
@@ -177,27 +236,26 @@ public class PlayerPlatformerController : PhysicsObject {
         return;
     }
 
-    private void getOutOfTerrain(RaycastHit2D found) {
-        
+    private void findGroundBox(Vector2 lookDirection, Vector2 origin, Vector2 size, out RayCastHitFind found, float dist = .1f) {
+        hitList.Clear();
+        found = default(RayCastHitFind);
+        int count = Physics2D.BoxCast(origin, size, 0f, lookDirection, groundPointContactFilter, gpHitBuffer, dist);
+        for (int i = 0; i < count; ++i) {
+            hitList.Add(gpHitBuffer[i]);
+        }
+        foreach (RaycastHit2D hit in hitList) {
+            if (hit.collider.CompareTag("Player")) { continue; }
+            if (hit.collider.gameObject.layer == LayerMask.NameToLayer("GameThingTerrain")) {
+                found.hit = hit;
+                found.found = true;
+                return;
 
+            }
+        }
+        return;
     }
-    //private void checkLodgedInTerrain() {
-    //    hitList.Clear();
-    //    lodgeInTerrainPoints.Clear();
-    //    int count = rb.Cast(Vector2.up, contactFilter, gpHitBuffer, 0f);
-    //    for(int i = 0; i < count; ++i) {
-    //        hitList.Add(gpHitBuffer[i]);
-    //    }
-    //    foreach(RaycastHit2D hit in hitList) {
-    //        if(hit.collider.CompareTag("Player")) { continue; }
-    //        if(hit.collider.gameObject.layer == LayerMask.NameToLayer("GameThingTerrain")) {
-    //            lodgeInTerrainPoints.Add(hit);
-    //        }
-    //    }
-    //}
 
-
-	public void takeDamage(DamageInfo damageInfo) {
+    public void takeDamage(DamageInfo damageInfo) {
         stats.health._value -= (int) damageInfo.damage;
 		if (damageInfo.damage > 0)
 		{
@@ -256,10 +314,7 @@ public class PlayerPlatformerController : PhysicsObject {
         if(Mathf.Abs(Input.GetAxis("Horizontal")) > 0f) {
             spriteRenderer.flipX = (Input.GetAxis("Horizontal") < 0f) != flipSpriteHorizontally;
         }
-        //bool flipSprite = (spriteRenderer.flipX != flipSpriteHorizontally ? (move.x > 0.01f) : (move.x < 0.01f));
-        //if (flipSprite) {
-        //    spriteRenderer.flipX = !spriteRenderer.flipX;
-        //}
+        
 
         animator.SetBool("grounded", grounded);
         animator.SetFloat("velocityX", Mathf.Abs(velocity.x) / maxSpeed);

@@ -101,8 +101,8 @@ public class PhysicsObject : MonoBehaviour {
 
 	protected virtual void nudgeRigidbody(Vector2 nudge)
 	{
-        //rb.position += nudge;
-        rb.position = Vector2.Lerp(rb.position, rb.position + nudge, .5f);
+        rb.position += nudge;
+        //rb.position = Vector2.Lerp(rb.position, rb.position + nudge, .5f);
 	}
 
 
