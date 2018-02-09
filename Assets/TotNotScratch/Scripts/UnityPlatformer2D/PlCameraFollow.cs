@@ -23,6 +23,29 @@ public class PlCameraFollow : MonoBehaviour
 	private RingBuffer<float> lastGroundPointYs;
     private Abyss abyss;
 
+    ViewPortHelper viewPortHelper;
+
+    [HideInInspector]
+    public bool centerPlayerMode {
+        set {
+            if (value) {
+                followAction = centerPlayer;
+            } else {
+                followAction = centerXLazyY;
+            }
+        }
+    }
+
+    private void centerPlayer() {
+        Vector3 pos = transform.position;
+        pos.x = player.transform.position.x;
+        pos.y = player.transform.position.y;
+        transform.position = pos;
+    }
+
+    private Action followAction;
+
+
 	private void Awake()
 	{
 		lastGroundPointYs = new RingBuffer<float>(24);
@@ -31,16 +54,24 @@ public class PlCameraFollow : MonoBehaviour
 
 	private void Start()
 	{
+        centerPlayerMode = false;
         abyss = FindObjectOfType<Abyss>();
 		smoothGroundPoint = player.groundPoint;
+        viewportHelper = FindObjectOfType<ViewPortHelper>();
 	}
 
 	private void FixedUpdate()
 	{
 		lerpGroundPoint();
-		centerXLazyY();
+        followAction();
+		//centerXLazyY();
         stayAboveTheAbyss();
 	}
+
+    public void zoomToContainWidth(float worldScaleWidth) {
+        float propoX = viewportHelper.viewPortGlobal.size.x / worldScaleWidth;
+        Camera.main.orthographicSize /= propoX;
+    }
 
     private void stayAboveTheAbyss() {
         float dif = abyss.surfaceY - viewportHelper.viewPortGlobal.min.y;

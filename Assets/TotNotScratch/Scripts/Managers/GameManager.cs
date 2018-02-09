@@ -22,6 +22,16 @@ public class GameManager : MonoBehaviour
         deathScreen.shouldBlit = false;
     }
 
+    internal void winLevel() {
+        if(isFinalScene) {
+            print("won the entire game");
+            return;
+        }
+
+        loadNextScene();
+        
+    }
+
     #region levels-scenes
 
     public void deathSequence() {

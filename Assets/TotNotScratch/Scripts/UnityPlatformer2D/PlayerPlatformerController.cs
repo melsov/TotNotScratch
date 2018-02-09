@@ -60,6 +60,7 @@ public class PlayerPlatformerController : PhysicsObject {
     RayCastHitFind lodgedInfo;
     Abyss abyss;
     private bool startedDyingAlready;
+    private bool canDie = true;
 
     // Use this for initialization
     protected override void OnEnable()
@@ -70,6 +71,8 @@ public class PlayerPlatformerController : PhysicsObject {
 	private void setup()
 	{
         startedDyingAlready = false;
+        canControl = true;
+        canDie = true;
         spriteRenderer = GetComponent<SpriteRenderer>();
         animator = GetComponent<Animator>();
         audioManager = ComponentHelper.FindAnywhereOrAdd<AudioManager>();
@@ -272,12 +275,19 @@ public class PlayerPlatformerController : PhysicsObject {
     }
 
     private void die() {
+        if(!canDie) { return; }
         if(startedDyingAlready) { return; }
         startedDyingAlready = true;
         canControl = false;
         FindObjectOfType<GameManager>().deathSequence();
-
     }
+
+    public void winLevel() {
+        canDie = false;
+        GetComponent<WinSequence>().win();
+    }
+
+    public void releaseControl() { canControl = false; }
 
     protected override void ComputeVelocity() {
 
@@ -329,6 +339,8 @@ public class PlayerPlatformerController : PhysicsObject {
 			base.nudgeRigidbody(nudge);
 		}
 	}
+
+
 
     public void handleSquish(GetPointsInfo info) {
         shouldSquishBounce = true;
