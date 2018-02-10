@@ -69,9 +69,8 @@ public class PhysicsMob : PhysicsObject
 	protected void mobVelocity()
 	{
 		float aheadDistance = (colldr.bounds.extents.x + .4f) * Mathf.Sign(dir.x);
-		//Check forwards
-		Vector2 look = Vector2.zero;
-		look.x = aheadDistance;
+        //Check forwards
+        Vector2 look = new Vector2(aheadDistance, 0f);
 		obstacleInfo.mostOpposingNormal = dir;
 		obstacleInfo.mostOpposingDot = dir.dot(obstacleInfo.mostOpposingNormal);
 		GetRayObstacles(colldr.bounds.center, look);
@@ -109,7 +108,7 @@ public class PhysicsMob : PhysicsObject
     PhysicsMob willHitAMob() {
         CastForMobs(alongGround * deltaPosition.x);
         PhysicsMob result = null;
-        foreach(RaycastHit2D rh in mobCastList) { //irrelevant: amusing field name 
+        foreach(RaycastHit2D rh in mobCastList) { 
             result = rh.collider.GetComponentInParent<PhysicsMob>();
             if(result) {
                 break;
